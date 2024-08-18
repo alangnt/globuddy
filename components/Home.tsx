@@ -31,6 +31,38 @@ export default function Home() {
         return null;
     }
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (activePostId !== null && !(event.target as Element).closest('.post-options')) {
+                setActivePostId(null);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, [activePostId]);
+
+    useEffect(() => {
+        fetchPosts().then(fetchedPosts => {
+            setPosts(sortPosts(fetchedPosts));
+        });
+    
+        const interval = setInterval(() => {
+            setPosts(prevPosts => {
+                const updatedPosts = prevPosts.map(post => ({
+                    ...post,
+                    created_at: formatDate(new Date(post.created_at))
+                }));
+                return sortPosts(updatedPosts);
+            });
+        }, 30000); // Update every 30 seconds
+    
+        return () => clearInterval(interval);
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const form = e.currentTarget;
@@ -53,20 +85,6 @@ export default function Home() {
     const handleEllipsisClick = (post: Post) => {
         setActivePostId(activePostId === post.id ? null : post.id);
     }
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (activePostId !== null && !(event.target as Element).closest('.post-options')) {
-                setActivePostId(null);
-            }
-        };
-
-        document.addEventListener('click', handleClickOutside);
-
-        return () => {
-            document.removeEventListener('click', handleClickOutside);
-        };
-    }, [activePostId]);
 
     const handleEditClick = (post: Post) => {
         setEditPost(post);
@@ -135,24 +153,6 @@ export default function Home() {
     const sortPosts = (posts: Post[]): Post[] => {
         return posts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
-    
-    useEffect(() => {
-        fetchPosts().then(fetchedPosts => {
-            setPosts(sortPosts(fetchedPosts));
-        });
-    
-        const interval = setInterval(() => {
-            setPosts(prevPosts => {
-                const updatedPosts = prevPosts.map(post => ({
-                    ...post,
-                    created_at: formatDate(new Date(post.created_at))
-                }));
-                return sortPosts(updatedPosts);
-            });
-        }, 30000); // Update every 30 seconds
-    
-        return () => clearInterval(interval);
-    }, []);
 
     return (
         <>

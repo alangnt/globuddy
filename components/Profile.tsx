@@ -47,6 +47,51 @@ export default function Profile() {
         interests: [],
         levels: []
     })
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (status === "authenticated" && session?.user?.username) {
+                try {
+                    const response = await fetch(`/api/profile?username=${session.user.username}`)
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch profile')
+                    }
+                    const profileData = await response.json()
+                    
+                    // Ensure interests is always an array of objects
+                    const formattedInterests = Array.isArray(profileData.interests)
+                        ? profileData.interests.map((interest: any) => 
+                            typeof interest === 'string' ? { interest } : interest)
+                        : [];
+
+                    const formattedLearningLanguages = Array.isArray(profileData.learning_languages)
+                        ? profileData.learning_languages
+                        : [];
+
+                    const formattedLearningLevels = Array.isArray(profileData.learning_levels)
+                        ? profileData.learning_levels
+                        : [];
+
+                    setFormData({
+                        firstname: profileData.firstname || '',
+                        lastname: profileData.lastname || '',
+                        username: profileData.username || '',
+                        email: profileData.email || '',
+                        location: profileData.location || '',
+                        bio: profileData.bio || '',
+                        native_language: profileData.native_language || '',
+                        learning_languages: formattedLearningLanguages,
+                        interests: formattedInterests,
+                        levels: formattedLearningLevels
+                    })
+                } catch (error) {
+                    console.error('Error fetching profile:', error)
+                }
+            }
+        }
+
+        fetchProfile()
+    }, [status, session])
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -104,51 +149,6 @@ export default function Profile() {
             // Show an error message to the user
         }
     }
-
-    useEffect(() => {
-        const fetchProfile = async () => {
-            if (status === "authenticated" && session?.user?.username) {
-                try {
-                    const response = await fetch(`/api/profile?username=${session.user.username}`)
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch profile')
-                    }
-                    const profileData = await response.json()
-                    
-                    // Ensure interests is always an array of objects
-                    const formattedInterests = Array.isArray(profileData.interests)
-                        ? profileData.interests.map((interest: any) => 
-                            typeof interest === 'string' ? { interest } : interest)
-                        : [];
-
-                    const formattedLearningLanguages = Array.isArray(profileData.learning_languages)
-                        ? profileData.learning_languages
-                        : [];
-
-                    const formattedLearningLevels = Array.isArray(profileData.learning_levels)
-                        ? profileData.learning_levels
-                        : [];
-
-                    setFormData({
-                        firstname: profileData.firstname || '',
-                        lastname: profileData.lastname || '',
-                        username: profileData.username || '',
-                        email: profileData.email || '',
-                        location: profileData.location || '',
-                        bio: profileData.bio || '',
-                        native_language: profileData.native_language || '',
-                        learning_languages: formattedLearningLanguages,
-                        interests: formattedInterests,
-                        levels: formattedLearningLevels
-                    })
-                } catch (error) {
-                    console.error('Error fetching profile:', error)
-                }
-            }
-        }
-
-        fetchProfile()
-    }, [status, session])
 
     if (status === "loading") {
         return <div>Loading...</div>

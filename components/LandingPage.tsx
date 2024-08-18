@@ -187,7 +187,7 @@ export default function Landing() {
                     </nav>
 
                     <section>
-                        <p>You're already logged in, {session.user.username}</p>
+                        <p>You&apos;re already logged in, {session.user.username}</p>
                     </section>
                 </main>
                 ) : (
