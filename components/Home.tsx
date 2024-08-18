@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Earth, CircleUserRound, Ellipsis } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 type Post = {
     id: number;
@@ -21,15 +21,22 @@ export default function Home() {
     const [editPost, setEditPost] = useState<Post | null>(null);
     const [activePostId, setActivePostId] = useState<number | null>(null);
     
+    const fetchPosts = useCallback(async () => {
+        const response = await fetch("/api/posts");
+        const data = await response.json();
+
+        const sortedPosts = data.sort((a: Post, b: Post) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        return sortedPosts.map((post: Post) => ({
+            ...post,
+            created_at: formatDate(new Date(post.created_at)),
+        }));
+    }, []);
+
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push('/');
         }
     }, [status, router]);
-
-    if (status === "unauthenticated") {
-        return null;
-    }
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -61,7 +68,15 @@ export default function Home() {
         }, 30000); // Update every 30 seconds
     
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchPosts]);
+
+    if (status === "loading") {
+        return <div>Loading...</div>;
+    }
+
+    if (status === "unauthenticated") {
+        return null;
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -121,17 +136,6 @@ export default function Home() {
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setContent(e.target.value);
-    }
-
-    const fetchPosts = async () => {
-        const response = await fetch("/api/posts");
-        const data = await response.json();
-
-        const sortedPosts = data.sort((a: Post, b: Post) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        return sortedPosts.map((post: Post) => ({
-            ...post,
-            created_at: formatDate(new Date(post.created_at)),
-        }));
     }
     
     const formatDate = (date: Date): string => {
