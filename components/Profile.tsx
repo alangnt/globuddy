@@ -13,28 +13,31 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface LearningLanguage {
-    language: string
-    level: string
+    language: string;
+    level: string;
 }
 
 interface FormData {
-    firstname: string
-    lastname: string
-    username: string
-    email: string
-    location: string
-    bio: string
-    native_language: string
-    learning_languages: string[]
-    levels: string[]
-    interests: { interest: string }[];
+    firstname: string;
+    lastname: string;
+    username: string;
+    email: string;
+    location: string;
+    bio: string;
+    native_language: string;
+    learning_languages: LearningLanguage[];
+    interests: string[];
 }
 
 export default function Profile() {
     const { data: session, status } = useSession()
     const router = useRouter()
+    const [newLanguage, setNewLanguage] = useState({ language: '', level: '' });
+    const [isAddLanguageOpen, setIsAddLanguageOpen] = useState(false);
     const [formData, setFormData] = useState<FormData>({
         firstname: '',
         lastname: '',
@@ -44,109 +47,97 @@ export default function Profile() {
         bio: '',
         native_language: '',
         learning_languages: [],
-        interests: [],
-        levels: []
+        interests: []
     })
+
+    const ALL_INTERESTS = [
+        "Travel",
+        "Food",
+        "Sports",
+        "Music",
+        "Movies",
+        "Books",
+        "Art",
+        "Fashion",
+        "Technology",
+        "Science",
+        "History",
+        "Philosophy",
+        "Politics",
+        "Religion",
+        "Other"
+    ]
 
     useEffect(() => {
         const fetchProfile = async () => {
             if (status === "authenticated" && session?.user?.username) {
                 try {
-                    const response = await fetch(`/api/profile?username=${session.user.username}`)
+                    const response = await fetch(`/api/profile?username=${session.user.username}`);
                     if (!response.ok) {
-                        throw new Error('Failed to fetch profile')
+                        throw new Error('Failed to fetch profile');
                     }
-                    const profileData = await response.json()
+                    const profileData = await response.json();
                     
-                    // Ensure interests is always an array of objects
-                    const formattedInterests = Array.isArray(profileData.interests)
-                        ? profileData.interests.map((interest: any) => 
-                            typeof interest === 'string' ? { interest } : interest)
-                        : [];
-
-                    const formattedLearningLanguages = Array.isArray(profileData.learning_languages)
-                        ? profileData.learning_languages
-                        : [];
-
-                    const formattedLearningLevels = Array.isArray(profileData.learning_levels)
-                        ? profileData.learning_levels
-                        : [];
-
+                    console.log('Fetched profile data:', profileData); // Add this line for debugging
+    
                     setFormData({
-                        firstname: profileData.firstname || '',
-                        lastname: profileData.lastname || '',
-                        username: profileData.username || '',
-                        email: profileData.email || '',
-                        location: profileData.location || '',
-                        bio: profileData.bio || '',
-                        native_language: profileData.native_language || '',
-                        learning_languages: formattedLearningLanguages,
-                        interests: formattedInterests,
-                        levels: formattedLearningLevels
-                    })
+                        ...profileData,
+                        interests: Array.isArray(profileData.interests) ? profileData.interests : [],
+                        learning_languages: Array.isArray(profileData.learning_languages) 
+                            ? profileData.learning_languages.map((lang: any) => ({
+                                language: lang.language || '',
+                                level: lang.level || ''
+                              }))
+                            : [],
+                    });
                 } catch (error) {
-                    console.error('Error fetching profile:', error)
+                    console.error('Error fetching profile:', error);
                 }
             }
-        }
-
-        fetchProfile()
-    }, [status, session])
+        };
+    
+        fetchProfile();
+    }, [status, session]);
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
     }
     
-    const handleLanguageChange = (index: number, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            learning_languages: prev.learning_languages.map((lang, i) =>
-                i === index ? value : lang
-            )
-        }))
-    }
-
-    const handleLevelChange = (index: number, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            levels: prev.levels.map((level, i) =>
-                i === index ? value : level
-            )
-        }))
-    }
-    
     const handleInterestChange = (interest: string) => {
         setFormData(prev => ({
             ...prev,
-            interests: prev.interests.some(i => i.interest === interest)
-                ? prev.interests.filter(i => i.interest !== interest)
-                : [...prev.interests, { interest }]
+            interests: prev.interests.includes(interest)
+                ? prev.interests.filter(i => i !== interest)
+                : [...prev.interests, interest]
         }));
     };
     
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-
+    
         try {
             const response = await fetch('/api/profile', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    ...formData,
+                    interests: formData.interests // Make sure this line is included
+                })
             })
-
+    
             if (!response.ok) {
                 throw new Error('Failed to update profile')
             }
-
+    
             const updatedProfile = await response.json()
-            // Update the session or show a success message
             console.log('Profile updated successfully:', updatedProfile)
+            // Optionally, update the form data with the response
+            setFormData(updatedProfile)
         } catch (error) {
             console.error('Error updating profile:', error)
-            // Show an error message to the user
         }
     }
 
@@ -159,6 +150,53 @@ export default function Profile() {
         return null
     }
 
+    // Traduct the level to a number of progress
+    const progressLevels = {
+        Beginner: 0,
+        Intermediate: 50,
+        Advanced: 75,
+        Fluent: 100
+    }
+
+    const handleAddLanguage = () => {
+        if (newLanguage.language && newLanguage.level) {
+            setFormData(prev => ({
+                ...prev,
+                learning_languages: [...prev.learning_languages, newLanguage]
+            }));
+            setNewLanguage({ language: '', level: '' });
+            setIsAddLanguageOpen(false);
+        }
+    };
+
+    const deleteLanguage = async (username: string, languageToDelete: string) => {
+        try {
+            const response = await fetch('/api/profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    delete_language: languageToDelete
+                }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to delete language');
+            }
+            const updatedUser = await response.json();
+            console.log('Language deleted, updated user:', updatedUser);
+            
+            // Update the formData state to reflect the deletion
+            setFormData(prev => ({
+                ...prev,
+                learning_languages: prev.learning_languages.filter(lang => lang.language !== languageToDelete)
+            }));
+        } catch (error) {
+            console.error('Error deleting language:', error);
+        }
+    };
+
     return (
         <>
             <header className="flex justify-between items-center px-2 mb-4">
@@ -168,8 +206,8 @@ export default function Profile() {
                 </Link>
     
                 <nav>
-                    <ul className="flex gap-4 py-0">
-                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/home">Home</Link></li>
+                    <ul className="flex py-0">
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center items-center"><Link href="/home">Home</Link></li>
                         <li className="text-black px-4 bg-gray-200 border-b-2 border-gray-400 transition-all duration-300 w-full flex justify-center items-center"><Link href="/profile">Profile</Link></li>
                         <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/messages">Messages</Link></li>
                         <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/settings">Settings</Link></li>
@@ -252,44 +290,67 @@ export default function Profile() {
                                     </Select>
                                 </div>
     
-                                <div className="space-y-2 space-x-2">
+                                <div className="space-y-2 flex flex-col gap-2">
                                     <Label>Learning Languages</Label>
-                                    {formData.learning_languages.map((lang, index) => (
-                                        <div key={index} className="flex space-x-2">
-                                            <Select value={lang} onValueChange={(value: string) => handleLanguageChange(index, value)}>
-                                                <SelectTrigger className="w-[180px]">
-                                                    <SelectValue placeholder="Select a language" />
-                                                </SelectTrigger>
-                                                
-                                                <SelectContent>
-                                                    <SelectItem value="English">English</SelectItem>
-                                                    <SelectItem value="Spanish">Spanish</SelectItem>
-                                                    <SelectItem value="French">French</SelectItem>
-                                                    <SelectItem value="German">German</SelectItem>
-                                                    <SelectItem value="Japanese">Japanese</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <Select value={formData.levels[index]} onValueChange={(value: string) => handleLevelChange(index, value)}>
-                                                <SelectTrigger className="w-[180px]">
-                                                    <SelectValue placeholder="Select level" />
-                                                </SelectTrigger>
-                                                
-                                                <SelectContent>
-                                                    <SelectItem value="Beginner">Beginner</SelectItem>
-                                                    <SelectItem value="Intermediate">Intermediate</SelectItem>
-                                                    <SelectItem value="Advanced">Advanced</SelectItem>
-                                                    <SelectItem value="Fluent">Fluent</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    ))}
-                                    <Button variant="outline" onClick={() => setFormData(prev => ({
-                                        ...prev,
-                                        learning_languages: [...prev.learning_languages, ''],
-                                        levels: [...prev.levels, '']
-                                    }))}>
-                                        Add Language
-                                    </Button>
+                                    {formData.learning_languages && formData.learning_languages.length > 0 ? (
+                                        formData.learning_languages.map((lang, index) => (
+                                            <div key={index} className="flex flex-col space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-medium">{lang.language}</span>
+                                                    <span className="text-sm text-gray-500">{lang.level}</span>
+                                                    <Button variant="outline" onClick={() => deleteLanguage(formData.username, lang.language)}>Delete</Button>
+                                                </div>
+                                                <Progress 
+                                                    value={progressLevels[lang.level as keyof typeof progressLevels] || 0} 
+                                                    className="h-2" 
+                                                />
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-gray-500">No learning languages added yet.</p>
+                                    )}
+                                    <Dialog open={isAddLanguageOpen} onOpenChange={setIsAddLanguageOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline">Add Language</Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Add New Language</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="grid gap-4 py-4">
+                                                <Select
+                                                    value={newLanguage.language}
+                                                    onValueChange={(value) => setNewLanguage(prev => ({ ...prev, language: value }))}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select language" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="English">English</SelectItem>
+                                                        <SelectItem value="Spanish">Spanish</SelectItem>
+                                                        <SelectItem value="French">French</SelectItem>
+                                                        <SelectItem value="German">German</SelectItem>
+                                                        <SelectItem value="Chinese">Chinese</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={newLanguage.level}
+                                                    onValueChange={(value) => setNewLanguage(prev => ({ ...prev, level: value }))}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select level" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Beginner">Beginner</SelectItem>
+                                                        <SelectItem value="Intermediate">Intermediate</SelectItem>
+                                                        <SelectItem value="Advanced">Advanced</SelectItem>
+                                                        <SelectItem value="Fluent">Fluent</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <Button onClick={handleAddLanguage}>Add</Button>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </CardContent>
                         </Card>
@@ -302,11 +363,11 @@ export default function Profile() {
                             
                             <CardContent>
                                 <div className="flex flex-wrap gap-2">
-                                {["Literature", "Cinema", "Cooking", "Travel", "Music", "Sports", "Art", "Technology", "Science", "History"].map((interest) => (
+                                {ALL_INTERESTS.map((interest) => (
                                     <Badge
                                         key={interest}
-                                        variant={formData.interests.some(i => i.interest === interest) ? "default" : "outline"}
-                                        className="cursor-pointer"
+                                        variant={formData.interests.includes(interest) ? "default" : "outline"}
+                                        className={`cursor-pointer ${formData.interests.includes(interest) ? 'bg-primary text-primary-foreground' : ''}`}
                                         onClick={() => handleInterestChange(interest)}
                                     >
                                         {interest}
@@ -341,5 +402,5 @@ export default function Profile() {
                 </form>
             </main>
         </>
-    )
+    );
 }
