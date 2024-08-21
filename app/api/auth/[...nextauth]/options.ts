@@ -10,11 +10,13 @@ declare module "next-auth" {
             username: string;
             firstname: string;
             lastname: string;
-            location: string;
+            country: string;
             bio: string;
             nativeLanguage: string;
-            learningLanguages: { language: string; level: string }[];
+            learningLanguages: { name: string; level: string }[];
             interests: { interest: string }[];
+            avatarUrl: string;
+            joinDate: string;
         } & DefaultSession["user"];
     }
     interface User {
@@ -23,11 +25,13 @@ declare module "next-auth" {
         username: string;
         firstname: string;
         lastname: string;
-        location: string;
+        country: string;
         bio: string;
         nativeLanguage: string;
-        learningLanguages: { language: string; level: string }[];
+        learningLanguages: { name: string; level: string }[];
         interests: { interest: string }[];
+        avatarUrl: string;
+        joinDate: string;
     }
 }
 
@@ -59,11 +63,13 @@ export const authOptions: NextAuthOptions = {
                             username: user.username,
                             firstname: user.firstname,
                             lastname: user.lastname,
-                            location: user.location,
+                            country: user.country,
                             bio: user.bio,
                             nativeLanguage: user.nativeLanguage,
                             learningLanguages: user.learningLanguages,
                             interests: user.interests,
+                            avatarUrl: user.avatarUrl,
+                            joinDate: user.joinDate,
                         };
                     } else {
                         const errorText = await res.text();
@@ -93,11 +99,13 @@ export const authOptions: NextAuthOptions = {
                 token.username = user.username;
                 token.firstname = user.firstname;
                 token.lastname = user.lastname;
-                token.location = user.location;
+                token.country = user.country;
                 token.bio = user.bio;
                 token.nativeLanguage = user.nativeLanguage;
                 token.learningLanguages = user.learningLanguages;
                 token.interests = user.interests;
+                token.avatarUrl = user.avatarUrl;
+                token.joinDate = user.joinDate;
             }
             return token;
         },
@@ -108,11 +116,13 @@ export const authOptions: NextAuthOptions = {
                 username: token.username as string,
                 firstname: token.firstname as string,
                 lastname: token.lastname as string,
-                location: token.location as string,
+                country: token.country as string,
                 bio: token.bio as string,
                 nativeLanguage: token.nativeLanguage as string,
-                learningLanguages: token.learningLanguages as { language: string; level: string }[],
+                learningLanguages: token.learningLanguages as { name: string; level: string }[],
                 interests: token.interests as { interest: string }[],
+                avatarUrl: token.avatarUrl as string,
+                joinDate: token.joinDate as string,
             };
             return session;
         }

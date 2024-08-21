@@ -8,24 +8,32 @@ const pool = new Pool({
 })
 
 // Function to safely parse JSON or return a default value
-const safeJsonParse = (field: string, value: string): any => {
+const safeJsonParse = (field: string, value: any): any => {
     if (field === 'interests') {
-        // Remove outer curly braces and split by commas
-        const interestsArray = value.slice(1, -1).split(',');
-        // Extract interest values using regex
-        return interestsArray.map(interest => {
-            const match = interest.match(/"interest":"([^"]+)"/);
-            return match ? match[1] : interest.trim().replace(/"/g, '');
-        });
+        try {
+            return typeof value === 'string' ? JSON.parse(value) : value;
+        } catch (error) {
+            console.error(`Error parsing interests:`, error);
+            return [];
+        }
+    }
+    if (field === 'languages' || field === 'levels') {
+        if (Array.isArray(value)) {
+            return value;
+        }
+        try {
+            return typeof value === 'string' ? value.split(',').map(item => item.trim()) : [];
+        } catch (error) {
+            console.error(`Error parsing ${field}:`, error);
+            console.error(`${field} value:`, value);
+            return [];
+        }
     }
     try {
-        return JSON.parse(value);
+        return typeof value === 'string' ? JSON.parse(value) : value;
     } catch (error) {
         console.error(`Error parsing ${field}:`, error);
         console.error(`${field} value:`, value);
-        if (field === 'learning_languages' || field === 'levels') {
-            return [];
-        }
         return null;
     }
 };
@@ -48,38 +56,63 @@ export async function GET(request: NextRequest) {
 
         const user = userResult.rows[0];
 
-        // Parse JSON strings for levels and learning_languages
-        if (typeof user.levels === 'string') {
-            user.levels = safeJsonParse('levels', user.levels);
-        }
-        if (typeof user.learning_languages === 'string') {
-            const parsedLanguages = safeJsonParse('learning_languages', user.learning_languages);
-            user.learning_languages = parsedLanguages.map((lang: any, index: number) => ({
-                language: lang.language || lang,
-                level: user.levels[index] || 'Beginner'
-            }));
-        }
+        console.log('Raw user data:', user);
 
-        if (typeof user.interests === 'string') {
-            user.interests = safeJsonParse('interests', user.interests);
-        }
+        // Parse languages and levels
+        user.learningLanguages = user.languages && user.levels ? 
+            user.languages.map((lang: string, index: number) => ({
+                name: lang.trim(),
+                level: user.levels[index].trim()
+            })) : [];
 
-        return NextResponse.json(user);
+        // Parse interests as JSON
+        user.interests = safeJsonParse('interests', user.interests) || [];
+
+        // Replace null values with empty strings for certain fields
+        const fieldsToCheck = ['native_language', 'firstname', 'lastname', 'email', 'country', 'bio'];
+        fieldsToCheck.forEach(field => {
+            user[field] = user[field] || '';
+        });
+
+        // Handle avatar_url
+        user.avatar_url = user.avatar_url || null;
+
+        // Format join date
+        user.joinDate = `Joined ${new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+
+        // Create the final user object with the correct structure
+        const transformedUser = {
+            username: user.username,
+            avatar_url: user.avatar_url,
+            country: user.country,
+            bio: user.bio,
+            native_language: user.native_language,
+            languages: user.languages,
+            levels: user.levels,
+            interests: user.interests,
+            email: user.email,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            followers: user.followers,
+            following: user.following
+        };
+
+        console.log('Transformed user data:', transformedUser);
+
+        return NextResponse.json(transformedUser);
     } catch (error) {
         console.error('Error fetching user profile:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
 
-// Handle POST request to update a profile
 export async function POST(request: NextRequest) {
     const updates = await request.json();
-    const { username, delete_language, interests } = updates;
+    const { username, delete_language, interests, languages, levels, avatar_url, ...otherUpdates } = updates;
 
-    console.log('Received updates:', updates); // Log received data
+    console.log('Received updates:', updates);
 
     try {
-        // First, fetch the current user data
         const userQuery = "SELECT * FROM users_globuddy WHERE username = $1";
         const userResult = await pool.query(userQuery, [username]);
 
@@ -87,44 +120,47 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const user = userResult.rows[0];
+        const currentUser = userResult.rows[0];
 
-        // Parse existing learning_languages and levels
-        let learning_languages = safeJsonParse('learning_languages', user.learning_languages);
-        let levels = safeJsonParse('levels', user.levels);
+        // Parse languages and levels, handling different possible formats
+        let updatedLanguages = Array.isArray(currentUser.languages) ? currentUser.languages :
+                               typeof currentUser.languages === 'string' ? currentUser.languages.replace(/[{}]/g, '').split(',').map((lang: string) => lang.trim()) :
+                               [];
+        let updatedLevels = Array.isArray(currentUser.levels) ? currentUser.levels :
+                            typeof currentUser.levels === 'string' ? currentUser.levels.replace(/[{}]/g, '').split(',').map((level: string) => level.trim()) :
+                            [];
 
         if (delete_language) {
-            // Remove the specified language and its corresponding level
-            learning_languages = learning_languages.filter((lang: any) => 
-                (typeof lang === 'object' ? lang.language : lang) !== delete_language
-            );
-            levels = levels.filter((_: unknown, index: number) => 
-                (typeof learning_languages[index] === 'object' ? 
-                    learning_languages[index].language : 
-                    learning_languages[index]) !== delete_language
-            );
-        } else {
-            // Update learning_languages and levels if provided in updates
-            if (updates.learning_languages) {
-                learning_languages = updates.learning_languages;
+            const index = updatedLanguages.findIndex((lang: string) => lang.toLowerCase() === delete_language.toLowerCase());
+            if (index > -1) {
+                updatedLanguages.splice(index, 1);
+                updatedLevels.splice(index, 1);
             }
-            if (updates.levels) {
-                levels = updates.levels;
-            }
+        } else if (languages && levels) {
+            updatedLanguages = Array.isArray(languages) ? languages : [languages].filter(Boolean);
+            updatedLevels = Array.isArray(levels) ? levels : [levels].filter(Boolean);
         }
 
-        // Prepare the update query
         let updateQuery = `
             UPDATE users_globuddy 
-            SET learning_languages = $1, levels = $2
+            SET languages = $1, levels = $2
         `;
-        let queryParams = [JSON.stringify(learning_languages), JSON.stringify(levels)];
+        let queryParams = [`{${updatedLanguages.join(',')}}`, `{${updatedLevels.join(',')}}`];
 
-        // If interests are provided, update them as well
         if (interests !== undefined) {
             updateQuery += `, interests = $${queryParams.length + 1}`;
             queryParams.push(JSON.stringify(interests));
         }
+
+        if (avatar_url !== undefined) {
+            updateQuery += `, avatar_url = $${queryParams.length + 1}`;
+            queryParams.push(avatar_url);
+        }
+
+        Object.entries(otherUpdates).forEach(([key, value]) => {
+            updateQuery += `, ${key} = $${queryParams.length + 1}`;
+            queryParams.push(value as string);
+        });
 
         updateQuery += ` WHERE username = $${queryParams.length + 1} RETURNING *`;
         queryParams.push(username);
@@ -133,16 +169,24 @@ export async function POST(request: NextRequest) {
 
         const updatedUser = result.rows[0];
 
-        // Parse JSON strings for levels, learning_languages, and interests in the response
+        // Parse the languages and levels back into arrays
+        updatedUser.languages = safeJsonParse('languages', updatedUser.languages);
         updatedUser.levels = safeJsonParse('levels', updatedUser.levels);
-        const parsedLanguages = safeJsonParse('learning_languages', updatedUser.learning_languages);
-        updatedUser.learning_languages = parsedLanguages.map((lang: any, index: number) => ({
-            language: typeof lang === 'object' ? lang.language : lang,
-            level: updatedUser.levels[index] || 'Beginner'
-        }));
-        updatedUser.interests = safeJsonParse('interests', updatedUser.interests);
 
-        console.log('Update result:', updatedUser); // Log update result
+        // Only parse interests if it's not already an object
+        if (typeof updatedUser.interests !== 'object') {
+            updatedUser.interests = safeJsonParse('interests', updatedUser.interests);
+        }
+
+        const fieldsToCheck = ['native_language', 'firstname', 'lastname', 'email', 'country', 'bio'];
+        fieldsToCheck.forEach(field => {
+            updatedUser[field] = updatedUser[field] || '';
+        });
+
+        // Ensure avatar_url is included in the returned user object
+        updatedUser.avatar_url = updatedUser.avatar_url || null;
+
+        console.log('Update result:', updatedUser);
         return NextResponse.json(updatedUser);
     } catch (error) {
         console.error('Error updating profile:', error);

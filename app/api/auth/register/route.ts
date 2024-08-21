@@ -15,7 +15,7 @@ async function hashPassword(password: string): Promise<string> {
 
 // Handle registration request
 export async function POST(request: NextRequest) {
-    const { username, email, password } = await request.json();
+    const { username, email, password, country, native_language, languages, levels } = await request.json();
     
     try {
         // Check if user already exists
@@ -30,8 +30,20 @@ export async function POST(request: NextRequest) {
         const hashedPassword = await hashPassword(password);
 
         // Insert new user
-        const insertUserQuery = "INSERT INTO users_globuddy (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *";
-        const insertUserResult = await pool.query(insertUserQuery, [username, email, hashedPassword]);
+        const insertUserQuery = `
+            INSERT INTO users_globuddy (
+                username, email, password_hash, country, native_language, languages, levels
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+        `;
+        const insertUserResult = await pool.query(insertUserQuery, [
+            username, 
+            email, 
+            hashedPassword, 
+            country, 
+            native_language, 
+            languages, 
+            levels
+        ]);
 
         const newUser = insertUserResult.rows[0];
 
