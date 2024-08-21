@@ -25,7 +25,7 @@ interface FormData {
     username: string;
     email: string;
     country: string;
-    avatarUrl: string;
+    avatar_url: string;
     bio: string;
     native_language: string;
     languages: string[];
@@ -43,7 +43,7 @@ export default function Profile() {
         email: '',
         country: '',
         bio: '',
-        avatarUrl: '',
+        avatar_url: '',
         native_language: '',
         languages: [],
         levels: [],
@@ -330,7 +330,7 @@ export default function Profile() {
                                     <Label htmlFor="avatar">Profile Picture</Label>
                                     <div className="flex items-center sm:space-x-4 max-sm:flex-col max-sm:w-full max-sm:justify-center max-sm:items-center max-sm:gap-2">
                                         <Avatar className="w-20 h-20">
-                                            <AvatarImage src={avatarUrl || "/placeholder-user.jpg"} alt={formData.firstname || ''} />
+                                            <AvatarImage src={formData.avatar_url || "/avatars/user.png"} alt={formData.firstname || ''} />
                                             <AvatarFallback>{formData.firstname?.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <Input id="avatar" type="file" accept="image/*" onChange={handleImageUpload} className="max-sm:w-full max-sm:text-center" />
