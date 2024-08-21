@@ -36,10 +36,6 @@ interface FormData {
 export default function Profile() {
     const { data: session, status } = useSession()
     const router = useRouter()
-    const [newLanguage, setNewLanguage] = useState({ language: '', level: '' });
-    const [isAddLanguageOpen, setIsAddLanguageOpen] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [notificationCount, setNotificationCount] = useState(0);
     const [formData, setFormData] = useState<FormData>({
         firstname: '',
         lastname: '',
@@ -53,6 +49,15 @@ export default function Profile() {
         levels: [],
         interests: []
     })
+    const [newLanguage, setNewLanguage] = useState({ language: '', level: '' });
+    const [isAddLanguageOpen, setIsAddLanguageOpen] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [notificationCount, setNotificationCount] = useState(0);
+    const [newInterest, setNewInterest] = useState('');
+    const [allInterests, setAllInterests] = useState([
+        "Travel", "Food", "Sports", "Music", "Movies", "Books", "Art", "Fashion",
+        "Technology", "Science", "History", "Philosophy", "Politics", "Religion"
+    ]);
 
     const progressLevels = {
         Beginner: 25,
@@ -61,50 +66,55 @@ export default function Profile() {
         Fluent: 100
     }
 
-    const [newInterest, setNewInterest] = useState('');
-    const [allInterests, setAllInterests] = useState([
-        "Travel", "Food", "Sports", "Music", "Movies", "Books", "Art", "Fashion",
-        "Technology", "Science", "History", "Philosophy", "Politics", "Religion"
-    ]);
-
-    const handleAddInterest = () => {
-        if (newInterest && !allInterests.includes(newInterest)) {
-            setAllInterests(prev => [...prev, newInterest]);
-            setFormData(prev => ({
-                ...prev,
-                interests: [...prev.interests, newInterest]
-            }));
-            setNewInterest('');
+    const fetchProfile = useCallback(async () => {
+        if (status === "authenticated" && session?.user?.username) {
+            try {
+                const response = await fetch(`/api/profile?username=${session.user.username}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profile');
+                }
+                const profileData = await response.json();
+                console.log('Fetched profile data:', profileData);
+                
+                setFormData({
+                    ...profileData,
+                    interests: Array.isArray(profileData.interests) ? profileData.interests : [],
+                    languages: Array.isArray(profileData.languages) ? profileData.languages : [],
+                    levels: Array.isArray(profileData.levels) ? profileData.levels : [],
+                });
+                setAvatarUrl(profileData.avatar_url || null);
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+            }
         }
-    };
+    }, [status, session?.user?.username]);
+
+    const fetchNotificationCount = useCallback(async () => {
+        if (session?.user?.username) {
+            try {
+                const response = await fetch(`/api/notifications?username=${session.user.username}&countOnly=true`);
+                if (response.ok) {
+                    const { count } = await response.json();
+                    setNotificationCount(count);
+                } else {
+                    console.error('Failed to fetch notification count');
+                }
+            } catch (error) {
+                console.error('Error fetching notification count:', error);
+            }
+        }
+    }, [session?.user?.username]);
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            if (status === "authenticated" && session?.user?.username) {
-                try {
-                    const response = await fetch(`/api/profile?username=${session.user.username}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch profile');
-                    }
-                    const profileData = await response.json();
-                    console.log('Fetched profile data:', profileData);
-                    
-                    setFormData({
-                        ...profileData,
-                        interests: Array.isArray(profileData.interests) ? profileData.interests : [],
-                        languages: Array.isArray(profileData.languages) ? profileData.languages : [],
-                        levels: Array.isArray(profileData.levels) ? profileData.levels : [],
-                    });
-                    setAvatarUrl(profileData.avatar_url || null);
-                } catch (error) {
-                    console.error('Error fetching profile:', error);
-                }
-            }
-        };
-    
         fetchProfile();
-    }, [status, session]);
-    
+    }, [fetchProfile]);
+
+    useEffect(() => {
+        fetchNotificationCount();
+        const intervalId = setInterval(fetchNotificationCount, 60000);
+        return () => clearInterval(intervalId);
+    }, [fetchNotificationCount]);
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
@@ -152,15 +162,6 @@ export default function Profile() {
         } catch (error) {
             console.error('Error updating profile:', error)
         }
-    }
-
-    if (status === "loading") {
-        return <div>Loading...</div>
-    }
-
-    if (status === "unauthenticated") {
-        router.push('/login')
-        return null
     }
 
     const handleAddLanguage = () => {
@@ -215,28 +216,6 @@ export default function Profile() {
         }
     };
 
-    const fetchProfile = async () => {
-        if (session?.user?.username) {
-            try {
-                const response = await fetch(`/api/profile?username=${session.user.username}`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch profile');
-                }
-                const profileData = await response.json();
-                setFormData({
-                    ...profileData,
-                    interests: Array.isArray(profileData.interests) ? profileData.interests : [],
-                    languages: Array.isArray(profileData.languages) ? profileData.languages : [],
-                    levels: Array.isArray(profileData.levels) ? profileData.levels : [],
-                });
-            } catch (error) {
-                console.error('Error fetching profile:', error);
-            }
-        }
-    };
-
-    const twoLanguages = formData.languages.length === 1 && formData.levels.length === 1;
-
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -258,30 +237,27 @@ export default function Profile() {
         }
     };
 
-    const fetchNotificationCount = useCallback(async () => {
-        if (session?.user?.username) {
-            try {
-                const response = await fetch(`/api/notifications?username=${session.user.username}&countOnly=true`);
-                if (response.ok) {
-                    const { count } = await response.json();
-                    setNotificationCount(count);
-                } else {
-                    console.error('Failed to fetch notification count');
-                }
-            } catch (error) {
-                console.error('Error fetching notification count:', error);
-            }
+    const handleAddInterest = () => {
+        if (newInterest && !allInterests.includes(newInterest)) {
+            setAllInterests(prev => [...prev, newInterest]);
+            setFormData(prev => ({
+                ...prev,
+                interests: [...prev.interests, newInterest]
+            }));
+            setNewInterest('');
         }
-    }, [session?.user?.username]);
+    };
 
-    useEffect(() => {
-        fetchNotificationCount();
-        // Set up an interval to fetch the notification count every minute
-        const intervalId = setInterval(fetchNotificationCount, 60000);
-        
-        // Clean up the interval on component unmount
-        return () => clearInterval(intervalId);
-    }, [fetchNotificationCount]);
+    if (status === "loading") {
+        return <div>Loading...</div>
+    }
+
+    if (status === "unauthenticated") {
+        router.push('/login')
+        return null
+    }
+
+    const twoLanguages = formData.languages.length >= 1; // Because it will change later
 
     return (
         <>

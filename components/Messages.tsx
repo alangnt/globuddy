@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { format } from "date-fns";
 import Image from "next/image";
 import { Textarea } from "@/components/ui/textarea"
+import { Suspense } from "react";
 
 interface Message {
     id: string;
@@ -27,7 +28,7 @@ interface Conversation {
     avatarUrl: string;
 }
 
-export default function Messages() {
+function MessagesContent() {
     const { data: session } = useSession();
     const [messages, setMessages] = useState<Message[]>([]);
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -57,19 +58,6 @@ export default function Messages() {
 
     const username = session?.user?.username;
 
-    useEffect(() => {
-        if (username) {
-            fetchConversations();
-        }
-    }, [username]);
-
-    useEffect(() => {
-        if (newMessageTo && username) {
-            setSelectedUser(newMessageTo);
-            fetchMessages(newMessageTo);
-        }
-    }, [newMessageTo, username]);
-
     const fetchConversations = useCallback(async () => {
         if (!username) return;
 
@@ -86,11 +74,7 @@ export default function Messages() {
         }
     }, [username]);
 
-    useEffect(() => {
-        fetchConversations();
-    }, [fetchConversations]);
-
-    const fetchMessages = async (otherUser: string) => {
+    const fetchMessages = useCallback(async (otherUser: string) => {
         if (!username) return;
 
         try {
@@ -104,7 +88,20 @@ export default function Messages() {
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
-    };
+    }, [username]);
+
+    useEffect(() => {
+        if (username) {
+            fetchConversations();
+        }
+    }, [username, fetchConversations]);
+
+    useEffect(() => {
+        if (newMessageTo && username) {
+            setSelectedUser(newMessageTo);
+            fetchMessages(newMessageTo);
+        }
+    }, [newMessageTo, username, fetchMessages]);
 
     const createNewConversation = async (recipient: string) => {
         if (!username) return;
@@ -369,5 +366,13 @@ export default function Messages() {
                 </div>
             </main>
         </>
+    );
+}
+
+export default function Messages() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <MessagesContent />
+        </Suspense>
     );
 }

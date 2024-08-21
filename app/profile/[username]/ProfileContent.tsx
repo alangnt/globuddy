@@ -56,7 +56,6 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [following, setFollowing] = useState<boolean>(false);
   const [user, setUser] = useState<User>(initialUser);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -88,86 +87,109 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
     }
   };
 
-  const fetchPosts = useCallback(async () => {
+  const fetchUserData = useCallback(async () => {
+    if (session?.user?.username) {
       try {
-          const response = await fetch(`/api/posts?username=${user.username}`);
-          
-          if (!response.ok) {
-              throw new Error(`Failed to fetch posts: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          
-          if (!Array.isArray(data)) {
-              throw new Error("Fetched data is not an array");
-          }
-
-          const postsWithLikesAndComments = await Promise.all(data.map(async (post: Post) => {
-              const likeData = await fetchPostLikes(post.id);
-              const comments = await fetchComments(post.id);
-              return {
-                  ...post,
-                  timestamp: new Date(post.created_at).getTime(),
-                  created_at: formatDate(post.created_at),
-                  likes: likeData ? likeData.likes : 0,
-                  userLiked: likeData ? likeData.userLiked : false,
-                  comments: comments,
-              };
-          }));
-
-          return postsWithLikesAndComments;
-      } catch (error) {
-          console.error("Error fetching posts:", error);
-          return [];
-      }
-  }, [user.username]);
-
-  const fetchPostLikes = async (postId: number) => {
-    try {
-        const response = await fetch(`/api/likes?id=${postId}`);
+        const response = await fetch(`/api/followers?username=${user.username}`);
         if (!response.ok) {
-            throw new Error(`Failed to fetch likes: ${response.statusText}`);
+          throw new Error('Failed to fetch user data');
         }
-        return await response.json();
-    } catch (error) {
-        console.error("Error fetching post likes:", error);
-        return null;
+        const data = await response.json();
+        setUser(prevUser => ({
+          ...prevUser,
+          followers: data.followers,
+          following: data.following 
+        }));
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
     }
-  };
+  }, [session?.user?.username, user.username]);
 
-  const fetchComments = async (postId: number) => {
-      try {
+  useEffect(() => {
+    fetchUserData();
+  }, [following, fetchUserData]);
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/posts?username=${user.username}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch posts: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!Array.isArray(data)) {
+        throw new Error("Fetched data is not an array");
+      }
+
+      const fetchPostLikes = async (postId: number) => {
+        try {
+          const response = await fetch(`/api/likes?id=${postId}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch likes: ${response.statusText}`);
+          }
+          return await response.json();
+        } catch (error) {
+          console.error("Error fetching post likes:", error);
+          return null;
+        }
+      };
+
+      const fetchComments = async (postId: number) => {
+        try {
           const response = await fetch(`/api/comments?postId=${postId}`);
           if (!response.ok) {
-              throw new Error(`Failed to fetch comments: ${response.statusText}`);
+            throw new Error(`Failed to fetch comments: ${response.statusText}`);
           }
           const comments = await response.json();
           return comments.map((comment: Comment) => ({
-              ...comment,
-              created_at: formatDate(comment.created_at)
+            ...comment,
+            created_at: formatDate(comment.created_at)
           }));
-      } catch (error) {
+        } catch (error) {
           console.error("Error fetching comments:", error);
           return [];
-      }
-  };
-
-  useEffect(() => {
-      const loadData = async () => {
-          const fetchedPosts = await fetchPosts();
-          setPosts(fetchedPosts);
+        }
       };
 
-      loadData();
+      const postsWithLikesAndComments = await Promise.all(data.map(async (post: Post) => {
+        const likeData = await fetchPostLikes(post.id);
+        const comments = await fetchComments(post.id);
+        return {
+          ...post,
+          timestamp: new Date(post.created_at).getTime(),
+          created_at: formatDate(post.created_at),
+          likes: likeData ? likeData.likes : 0,
+          userLiked: likeData ? likeData.userLiked : false,
+          comments: comments,
+        };
+      }));
 
-      const interval = setInterval(() => {
-          setPosts(prevPosts => sortPosts(prevPosts.map(post => ({
-              ...post,
-              created_at: formatDate(post.created_at)
-          }))));
-      }, 30000);
+      return postsWithLikesAndComments;
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      return [];
+    }
+  }, [user.username]);
 
-      return () => clearInterval(interval);
+  useEffect(() => {
+    const loadData = async () => {
+      const fetchedPosts = await fetchPosts();
+      setPosts(fetchedPosts);
+    };
+
+    loadData();
+
+    const interval = setInterval(() => {
+      setPosts(prevPosts => sortPosts(prevPosts.map(post => ({
+        ...post,
+        created_at: formatDate(post.created_at)
+      }))));
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [fetchPosts]);
 
   const sortPosts = (posts: Post[]): Post[] => {
@@ -192,23 +214,20 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
 
         const data = await response.json();
 
-        // Update the local state to reflect the new connection status
         setUser(prevUser => ({
             ...prevUser,
-            followers: data.followers, // Ensure this is the updated follower count
-            following: data.following // Ensure this is the updated following count
+            followers: data.followers,
+            following: data.following
         }));
 
-        setFollowing(!following); // Toggle following state
+        setFollowing(!following);
 
-        // Fetch updated follower/following counts
-        await fetchUserData(); // Call the new function to update counts
+        await fetchUserData();
     } catch (error) {
         console.error(`Failed to ${following ? 'unfollow' : 'follow'}:`, error);
     }
-}
+  }
 
-  // Ensure to check if the user is following before making the API call
   useEffect(() => {
     const checkFollowingStatus = async () => {
         if (session?.user?.username) {
@@ -229,23 +248,6 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
     };
     checkFollowingStatus();
   }, [session, user.username]);
-
-  // Add this effect to fetch the updated follower/following counts after a follow/unfollow action
-  const fetchUserData = async () => {
-    if (session?.user?.username) {
-        const response = await fetch(`/api/followers?username=${user.username}`);
-        const data = await response.json();
-        setUser(prevUser => ({
-            ...prevUser,
-            followers: data.followers, // Update followers count from the API
-            following: data.following // Update following count from the API
-        }));
-    }
-  };
-
-  useEffect(() => {
-    fetchUserData();
-  }, [following, user.username]); // Trigger this effect when following state changes
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
