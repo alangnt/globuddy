@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 type Post = {
     id: number;
@@ -72,13 +73,22 @@ export default function Home() {
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
+    const getAvatarUrl = useCallback((user: User | undefined) => {
+        if (user?.avatar_url) {
+            return user.avatar_url;
+        } else {
+            return "/avatars/user.png";
+        }
+    }, []);
+
     const fetchPosts = useCallback(async () => {
         const response = await fetch("/api/posts");
         const data = await response.json();
+        console.log(data);
         const postsWithDetails = await Promise.all(data.map(async (post: Post) => {
             const likeData = await fetch(`/api/likes?id=${post.id}`).then(res => res.json());
             const comments = await fetch(`/api/comments?postId=${post.id}`).then(res => res.json());
-            const languages = await fetch(`/api/users?username=${post.user.username}`).then(res => res.json()).then(data => data.languages);
+            const userData = await fetch(`/api/users?username=${post.user.username}`).then(res => res.json());
             return {
                 ...post,
                 timestamp: new Date(post.created_at).getTime(),
@@ -88,7 +98,8 @@ export default function Home() {
                 comments: comments,
                 user: {
                     ...post.user,
-                    languages: languages
+                    languages: userData.languages,
+                    avatar_url: userData.avatar_url || post.user.avatar_url
                 }
             };
         }));
@@ -352,14 +363,14 @@ export default function Home() {
                                     <article key={post.id} className="flex flex-col relative">
                                         <div className="flex gap-2 items-center relative">
                                             <div className="flex items-center">
-                                                <Image
-                                                    src={post.user?.avatar_url ? `/avatars/${post.user.avatar_url.replace(/^\/avatars\//, '')}` : '/avatars/user.png'}
-                                                    alt={post.username[0].toUpperCase()}
-                                                    width={50}
-                                                    height={50}
-                                                    className="rounded-full border-2 border-gray-200 hover:cursor-pointer sm:block hidden"
-                                                    onClick={() => navigateToProfile(post.username)}
-                                                />
+                                                <Avatar className="w-10 h-10">
+                                                    <AvatarImage 
+                                                        src={getAvatarUrl(post.user)} 
+                                                        alt={post.username[0].toUpperCase()} 
+                                                        onClick={() => navigateToProfile(post.username)}
+                                                    />
+                                                    <AvatarFallback>{post.username[0].toUpperCase()}</AvatarFallback>
+                                                </Avatar>
                                             </div>
                                             <div className="flex flex-col flex-grow">
                                                 <div className="flex items-center gap-2 justify-between">
@@ -476,7 +487,7 @@ export default function Home() {
                                                             <div className="flex items-center gap-2">
                                                                 <div className="flex items-center gap-2">
                                                                     <Image
-                                                                        src={comment.user?.avatar_url ? `/avatars/${comment.user.avatar_url.replace(/^\/avatars\//, '')}` : '/avatars/user.png'}
+                                                                        src={getAvatarUrl(comment.user)}
                                                                         alt={comment.username[0].toUpperCase()}
                                                                         width={50}
                                                                         height={50}
@@ -517,11 +528,11 @@ export default function Home() {
                                         <div className="flex gap-2 items-center relative">
                                             <div className="flex items-center">
                                                 <Image
-                                                    src={post.user?.avatar_url ? `/avatars/${post.user.avatar_url.replace(/^\/avatars\//, '')}` : '/avatars/user.png'}
+                                                    src={getAvatarUrl(post.user)}
                                                     alt={post.username[0].toUpperCase()}
                                                     width={50}
                                                     height={50}
-                                                    className="rounded-full border-2 border-gray-200 hover:cursor-pointer sm:block hidden"
+                                                    className="rounded-full border-2 border-gray-200 hover:cursor-pointer"
                                                     onClick={() => navigateToProfile(post.username)}
                                                 />
                                             </div>
@@ -643,7 +654,7 @@ export default function Home() {
                                                             <div className="flex items-center gap-2">
                                                                 <div className="flex items-center gap-2">
                                                                     <Image
-                                                                        src={comment.user?.avatar_url ? `/avatars/${comment.user.avatar_url.replace(/^\/avatars\//, '')}` : '/avatars/user.png'}
+                                                                        src={getAvatarUrl(comment.user)}
                                                                         alt={comment.username[0].toUpperCase()}
                                                                         width={50}
                                                                         height={50}

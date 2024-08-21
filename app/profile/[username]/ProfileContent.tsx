@@ -11,11 +11,6 @@ import { useSession } from 'next-auth/react';
 import { useCallback, useState, useEffect } from 'react';
 import Image from "next/image"
 
-export interface Language {
-  name: string;
-  level: string;
-}
-
 type Post = {
   id: number;
   content: string;
@@ -43,7 +38,8 @@ interface User {
   joinDate: string;
   bio: string;
   nativeLanguage: string;
-  learningLanguages: Language[];
+  languages: string[];
+  levels: string[];
   interests: string[];
   posts: Post[];
   followers: number;
@@ -74,6 +70,18 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
     });
   }
 
+  const getAvatarUrl = useCallback((avatarUrl: string | null) => {
+    if (avatarUrl) {
+      // If the avatarUrl starts with 'http' or 'https', it's already a full URL
+      if (avatarUrl.startsWith('http')) {
+        return avatarUrl;
+      }
+      // Otherwise, it's a relative path, so prepend with '/avatars/'
+      return `/avatars/${avatarUrl.replace(/^\/avatars\//, '')}`;
+    }
+    return '/avatars/user.png'; // Default avatar
+  }, []);
+
   const handleMessageClick = async () => {
     if (!session?.user?.username) {
       console.error("User not logged in");
@@ -88,27 +96,29 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
   };
 
   const fetchUserData = useCallback(async () => {
-    if (session?.user?.username) {
-      try {
-        const response = await fetch(`/api/followers?username=${user.username}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
-        }
-        const data = await response.json();
-        setUser(prevUser => ({
-          ...prevUser,
-          followers: data.followers,
-          following: data.following 
-        }));
-      } catch (error) {
-        console.error('Error fetching user data:', error);
+    try {
+      const response = await fetch(`/api/users?username=${initialUser.username}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
       }
+      const userData = await response.json();
+      setUser(prevUser => ({
+        ...prevUser,
+        ...userData,
+        nativeLanguage: userData.native_language,
+        learningLanguages: userData.languages.map((lang: any) => ({
+          languages: lang.language,
+          levels: lang.level
+        })) || [],
+      }));
+    } catch (error) {
+      console.error('Error fetching user data:', error);
     }
-  }, [session?.user?.username, user.username]);
+  }, [initialUser.username]);
 
   useEffect(() => {
     fetchUserData();
-  }, [following, fetchUserData]);
+  }, [fetchUserData]);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -249,6 +259,21 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
     checkFollowingStatus();
   }, [session, user.username]);
 
+  const getProgressValue = (levels: string) => {
+    switch (levels) {
+      case 'Beginner':
+        return 25;
+      case 'Intermediate':
+        return 50;
+      case 'Advanced':
+        return 75;
+      case 'Fluent':
+        return 100;
+      default:
+        return 0;
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <header className="flex justify-between items-center px-2 mb-12">
@@ -295,12 +320,12 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
                 <div className="flex flex-col items-center space-y-4">
                   <div className="text-center flex flex-col items-center gap-2">
                     <Image 
-                      src={user.avatarUrl ? `/avatars/${user.avatarUrl.replace(/^\/avatars\//, '')}` : '/avatars/user.png'} 
-                      alt={user.username[0].toUpperCase()} 
-                      width={75} 
-                      height={75} 
-                      className="rounded-full border-2 border-gray-200" 
-                    />
+                        src={getAvatarUrl(user.avatarUrl)}
+                        alt={user.username[0].toUpperCase()} 
+                        width={75} 
+                        height={75} 
+                        className="rounded-full border-2 border-gray-200" 
+                      />
                     <h1 className="text-2xl font-bold">{user.username}</h1>
                   </div>
 
@@ -381,14 +406,14 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
                       <span className="text-sm font-medium">Native Language: {user.nativeLanguage || 'Not specified'}</span>
                     </div>
                   </div>
-                  {user.learningLanguages && user.learningLanguages.length > 0 ? (
-                    user.learningLanguages.map((lang: Language, index: number) => (
+                  {user.languages && user.languages.length > 0 ? (
+                    user.languages.map((lang: string, index: number) => (
                       <div key={index}>
                         <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">{lang.name}</span>
-                          <span className="text-sm font-medium text-gray-500">{lang.level}</span>
+                          <span className="text-sm font-medium">{lang}</span>
+                          <span className="text-sm font-medium text-gray-500">{user.levels[index]}</span>
                         </div>
-                        <Progress value={75} className="h-2" />
+                        <Progress value={getProgressValue(user.levels[index])} className="h-2" />
                       </div>
                     ))
                   ) : (
