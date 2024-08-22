@@ -6,9 +6,11 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserRoundSearch, Earth } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import Countries from "@/components/Countries";
 import Languages from "@/components/Languages";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function Landing() {
     const [submitted, setSubmitted] = useState<boolean>(false);
@@ -228,38 +230,104 @@ export default function Landing() {
                         </form>
                     </section>
                 );
-            case 'contact':
-                return (
-                    <section className="flex flex-col items-center justify-center gap-8">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                            <h2 className="text-2xl font-bold text-center">Contact</h2>
-                            <p className="max-sm:text-center">Contact us at contact@globuddy.com</p>
-                        </div>
-                    </section>
-                );
             default:
                 return (
-                    <section className="flex flex-col items-center justify-center gap-8 max-sm:w-full">
-                        <div className="flex flex-row items-center justify-center gap-4 max-sm:flex-col max-sm:w-full">
-                            <article className="flex flex-col items-center justify-between sm:w-1/4 lg:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
-                                <h2><UserRoundSearch /></h2>
+                    <section className="flex-1 py-8 container mx-auto px-0 md:px-6 sm:w-[90%]">
+                        <div className="grid gap-6 md:grid-cols-2 max-md:grid-cols-1">
+                            <Card className="h-full max-sm:rounded-none">
+                                <CardHeader>
+                                    <CardTitle className="max-sm:text-center">Frequently Asked Questions</CardTitle>
+                                </CardHeader>
 
-                                <p className="flex grow">Globuddy is an international language exchange platform that allows you to connect with people from all over the world.</p>
-                        </article>
+                                <CardContent className="flex flex-col gap-4">
+                                    <Accordion type="single" collapsible className="w-full">
+                                        <AccordionItem value="item-1">
+                                            <AccordionTrigger>How do I find a language partner?</AccordionTrigger>
 
-                        <article className="flex flex-col items-center justify-between sm:w-1/4 lg:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
-                            <h2><Earth /></h2>
+                                            <AccordionContent>
+                                                You can find a language partner by 
+                                                posting in the community forum, or using our matching algorithm. 
+                                                Simply specify the language you&apos;re learning and your proficiency level to get started.
+                                            </AccordionContent>
+                                        </AccordionItem>
 
-                            <p className="flex grow">Explore the world with Globuddy. Connect with people from all over the world. Learn new languages and cultures.</p>
-                        </article>
+                                        <AccordionItem value="item-2">
+                                            <AccordionTrigger>Is Globuddy free to use?</AccordionTrigger>
 
-                        <article className="flex flex-col items-center justify-between sm:w-1/4 lg:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
-                            <h2><UserRoundSearch /></h2>
+                                            <AccordionContent>
+                                                Globuddy will offer both free and premium features. 
+                                                Basic language exchange and community features are free, 
+                                                while advanced learning tools and unlimited learning languages will require a subscription.
+                                            </AccordionContent>
+                                        </AccordionItem>
 
-                            <p className="flex grow">Globuddy is a project management tool that allows you to track your projects and tasks.</p>
-                        </article>
-                    </div>
-                </section>
+                                        <AccordionItem value="item-3">
+                                            <AccordionTrigger>How can I report inappropriate behavior?</AccordionTrigger>
+
+                                            <AccordionContent>
+                                                If you encounter any inappropriate behavior, please contact us through the email below. 
+                                                Our moderation team will review your report and take appropriate action.
+                                                <br />
+                                                <br />
+                                                <a href="mailto:globuddy.app@gmail.com" className="text-blue-600 hover:text-blue-800">globuddy.app@gmail.com</a>
+                                            </AccordionContent>
+                                        </AccordionItem>
+
+                                        <AccordionItem value="item-4">
+                                            <AccordionTrigger>Can I learn multiple languages simultaneously?</AccordionTrigger>
+
+                                            <AccordionContent>
+                                                Yes, you will be able to learn multiple languages on Globuddy using the premium subscription. 
+                                                Simply add the languages you&apos;re interested in to your profile, 
+                                                and you&apos;ll be able to connect with partners for each language.
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="h-full max-sm:rounded-none">
+                                <CardHeader>
+                                    <CardTitle className="max-sm:text-center">Additional Contact Information</CardTitle>
+                                </CardHeader>
+
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center space-x-2 max-sm:justify-center">
+                                        <Mail className="h-4 w-4 text-blue-600" />
+                                        <span>globuddy.app@gmail.com</span>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2 max-sm:justify-center">
+                                        <Phone className="h-4 w-4 text-blue-600" />
+                                        <span>(Coming soon)</span>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2 max-sm:justify-center">
+                                        <MapPin className="h-4 w-4 text-blue-600" />
+                                        <span>Menton, France</span>
+                                    </div>
+
+                                    <div className="space-x-4 pt-4 hidden">
+                                        <a href="#" className="text-gray-600 hover:text-blue-600">
+                                            <Facebook className="h-6 w-6" />
+                                        </a>
+
+                                        <a href="#" className="text-gray-600 hover:text-blue-600">
+                                            <Twitter className="h-6 w-6" />
+                                        </a>
+
+                                        <a href="#" className="text-gray-600 hover:text-blue-600">
+                                            <Instagram className="h-6 w-6" />
+                                        </a>
+
+                                        <a href="#" className="text-gray-600 hover:text-blue-600">
+                                            <Linkedin className="h-6 w-6" />
+                                        </a>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </section>
                 );
         }
     };
@@ -282,21 +350,19 @@ export default function Landing() {
                     <nav className="w-full">
                         <ul className="flex justify-evenly items-center w-full max-sm:flex-col">
                             <li
-                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 ${activeSection === 'login' ? 'bg-gray-200 border-gray-400' : ''}`}
+                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300`}
                             >
                                 <Link href="/home" className="w-full text-center">Posts</Link>
                             </li>
 
                             <li
-                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 ${activeSection === 'profile' ? 'bg-gray-200 border-gray-400' : ''}`}
-                                onClick={() => setActiveSection('profile')}
+                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300`}
                             >
                                 <Link href="/profile" className="w-full text-center">Profile</Link>
                             </li>
 
                             <li
-                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 ${activeSection === 'profile' ? 'bg-gray-200 border-gray-400' : ''}`}
-                                onClick={() => setActiveSection('profile')}
+                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300`}
                             >
                                 <Link href="/notifications" className="flex items-center gap-2 hover:scale-105">
                                     Notifications
@@ -309,7 +375,7 @@ export default function Landing() {
                             </li>
 
                             <li
-                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 ${activeSection === 'profile' ? 'bg-gray-200 border-gray-400' : ''}`}
+                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300`}
                                 onClick={() => signOut()}
                             >
                                 <button className="w-full text-center">Logout</button>
@@ -317,8 +383,9 @@ export default function Landing() {
                         </ul>
                     </nav>
 
-                    <section>
-                        <p className="text-center">You&apos;re already logged in, {session.user.username}</p>
+                    <section className="flex flex-col justify-between grow max-sm:gap-8 sm:w-[80%] w-full">
+                        {renderSection()}
+                        <p className="text-center">Welcome back, {session.user.username} !</p>
                     </section>
                 </main>
                 ) : (
@@ -344,13 +411,6 @@ export default function Landing() {
                                 onClick={() => setActiveSection('about')}
                             >
                                 <Link href="/" className="w-full text-center">About</Link>
-                            </li>
-
-                            <li 
-                                className={`w-full flex justify-center bg-white text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 ${activeSection === 'contact' ? 'bg-gray-200 border-gray-400' : ''}`}
-                                onClick={() => setActiveSection('contact')}
-                            >
-                                <Link href="/" className="w-full text-center">Contact</Link>
                             </li>
 
                             <li 
