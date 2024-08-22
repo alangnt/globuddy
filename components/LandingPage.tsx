@@ -101,6 +101,8 @@ export default function Landing() {
 
         if (result?.ok) {
             router.push('/home');
+        } else {
+            alert('Invalid email or password');
         }
     }
 
