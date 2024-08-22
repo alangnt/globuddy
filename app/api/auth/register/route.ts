@@ -29,14 +29,18 @@ export async function POST(request: NextRequest) {
         // Hash the password
         const hashedPassword = await hashPassword(password);
 
+        // Encode the username
+        const encodedUsername = encodeURIComponent(username);
+
         // Insert new user
         const insertUserQuery = `
             INSERT INTO users_globuddy (
-                username, email, password_hash, country, native_language, languages, levels
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+                username, encoded_username, email, password_hash, country, native_language, languages, levels
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
         `;
         const insertUserResult = await pool.query(insertUserQuery, [
-            username, 
+            username,
+            encodedUsername,
             email, 
             hashedPassword, 
             country, 
@@ -49,7 +53,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ 
             message: 'User registered successfully', 
-            user: { id: newUser.id, email: newUser.email } 
+            user: { id: newUser.id, email: newUser.email, username: newUser.encoded_username } 
         }, { status: 201 });
     } catch (err) {
         console.error('Registration error:', err);
