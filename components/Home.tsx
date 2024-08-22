@@ -48,6 +48,15 @@ type User = {
     languages: string[];
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
 export default function Home() {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -62,6 +71,7 @@ export default function Home() {
     const [activeCommentPostId, setActiveCommentPostId] = useState<number | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
 
     const formatDate = (date: Date): string => {
         const now = new Date();
@@ -107,13 +117,22 @@ export default function Home() {
     }, []);
 
     const fetchUserLanguages = useCallback(async (username: string) => {
-        const response = await fetch(`/api/users?username=${username}`);
-        if (response.ok) {
-            const data = await response.json();
+        const [userResponse, allUsersResponse] = await Promise.all([
+            fetch(`/api/users?username=${username}`),
+            fetch('/api/users')
+        ]);
+    
+        if (userResponse.ok && allUsersResponse.ok) {
+            const userData = await userResponse.json();
+            const allUsers = await allUsersResponse.json();
+    
             setUserLanguages({
-                native_language: data.native_language,
-                languages: data.languages
+                native_language: userData.native_language,
+                languages: userData.languages
             });
+    
+            // Store all users in state
+            setAllUsers(allUsers);
         }
     }, []);
 
@@ -126,6 +145,21 @@ export default function Home() {
             }
         }
     }, [session?.user?.username]);
+
+    const matchingUsers = useMemo(() => {
+        if (userLanguages.native_language && userLanguages.languages.length > 0) {
+            return allUsers.filter(user => 
+                user.native_language !== userLanguages.native_language &&
+                user.languages.includes(userLanguages.native_language) &&
+                userLanguages.languages.includes(user.native_language)
+            );
+        }
+        return [];
+    }, [allUsers, userLanguages]);
+
+    const fourRandomMatchingUsers = useMemo(() => {
+        return shuffleArray(matchingUsers).slice(0, 4);
+    }, [matchingUsers]);
 
     useEffect(() => {
         if (status === "authenticated" && session?.user?.username) {
@@ -331,9 +365,37 @@ export default function Home() {
                     </Sheet>
                 </div>
             </header>
+
             <main className="flex flex-col items-center grow gap-8">
                 <section className="flex flex-col gap-8 w-full max-w-2xl mx-auto bg-white p-4 sm:rounded-md border border-gray-300">
-                    <div>
+                    <h2 className="text-2xl font-bold max-sm:text-center">Language Exchange Partners</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-sm:justify-center max-sm:items-center max-sm:flex max-sm:flex-col">
+                        {fourRandomMatchingUsers.map((user) => (
+                            <div key={user.id} 
+                                className="flex items-center sm:gap-4 p-4 border rounded-md hover:cursor-pointer max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:text-center max-sm:w-[80%]" 
+                                onClick={() => navigateToProfile(user.username)}
+                            >
+                                <Avatar className="w-12 h-12">
+                                    <AvatarImage src={getAvatarUrl(user)} alt={user.username} />
+                                    <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+                                </Avatar>
+
+                                <div>
+                                    <h3 className="font-bold">{user.username}</h3>
+                                    <p className="text-sm text-gray-600">
+                                        {getLanguageAcronym(user.native_language)} → {user.languages.map(getLanguageAcronym).join(', ')}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {matchingUsers.length === 0 && (
+                        <p className="text-center text-gray-500">No matching users found. Keep checking back!</p>
+                    )}
+                </section>
+
+                <section className="flex flex-col gap-8 w-full max-w-2xl mx-auto bg-white p-4 sm:rounded-md border border-gray-300">
+                    <div className="max-sm:text-center">
                         <h2 className="text-2xl font-bold">Create a New Post</h2>
                         <p className="text-gray-500 text-sm">Share your thoughts or find a language partner</p>
                     </div>
@@ -345,12 +407,12 @@ export default function Home() {
                             onChange={handleChange}
                             value={content}
                         />
-                        <button type="submit" className="bg-black text-white p-2 px-4 rounded-md text-sm w-min">Post</button>
+                        <button type="submit" className="bg-black text-white p-2 px-4 rounded-md text-sm w-min max-sm:w-full">Post</button>
                     </form>
                 </section>
 
                 <Tabs defaultValue="foryou" className="flex flex-col w-full max-w-2xl mx-auto bg-white p-4 sm:rounded-md border border-gray-300" onValueChange={handleTabChange}>
-                    <h2 className="text-2xl font-bold mb-4">Posts</h2>
+                    <h2 className="text-2xl font-bold mb-4 max-sm:text-center">Posts</h2>
                     <TabsList>
                         <TabsTrigger value="foryou" className="w-full">For You</TabsTrigger>
                         <TabsTrigger value="allposts" className="w-full">All Posts</TabsTrigger>
@@ -363,15 +425,16 @@ export default function Home() {
                                     <article key={post.id} className="flex flex-col relative">
                                         <div className="flex gap-2 items-center relative">
                                             <div className="flex items-center">
-                                                <Avatar className="w-10 h-10">
-                                                    <AvatarImage 
-                                                        src={getAvatarUrl(post.user)} 
-                                                        alt={post.username[0].toUpperCase()} 
-                                                        onClick={() => navigateToProfile(post.username)}
-                                                    />
-                                                    <AvatarFallback>{post.username[0].toUpperCase()}</AvatarFallback>
-                                                </Avatar>
+                                                <Image
+                                                    src={getAvatarUrl(post.user)}
+                                                    alt={post.username[0].toUpperCase()}
+                                                    width={50}
+                                                    height={50}
+                                                    className="rounded-full border-2 border-gray-200 hover:cursor-pointer"
+                                                    onClick={() => navigateToProfile(post.username)}
+                                                />
                                             </div>
+
                                             <div className="flex flex-col flex-grow">
                                                 <div className="flex items-center gap-2 justify-between">
                                                     <div className="flex items-center gap-2">
@@ -515,7 +578,7 @@ export default function Home() {
                                     </article>
                                 ))
                             ) : (
-                                <p>{activeTab === 'foryou' ? "There are no users learning your language yet. Be the first!" : "No posts yet. Be the first to post!"}</p>
+                                <p className="max-sm:text-center">{activeTab === 'foryou' ? "There are no users learning your language yet. Be the first!" : "No posts yet. Be the first to post!"}</p>
                             )}
                         </div>
                     </TabsContent>
@@ -536,6 +599,7 @@ export default function Home() {
                                                     onClick={() => navigateToProfile(post.username)}
                                                 />
                                             </div>
+
                                             <div className="flex flex-col flex-grow">
                                                 <div className="flex items-center gap-2 justify-between">
                                                     <div className="flex items-center gap-2">
@@ -634,6 +698,7 @@ export default function Home() {
                                                 </div>
                                             )}
                                         </div>
+
                                         {activeCommentPostId === post.id && (
                                             <div className="mt-2">
                                                 <textarea
@@ -682,7 +747,7 @@ export default function Home() {
                                     </article>
                                 ))
                             ) : (
-                                <p>No posts yet. Be the first to post!</p>
+                                <p className="max-sm:text-center">No posts yet. Be the first to post!</p>
                             )}
                         </div>
                     </TabsContent>

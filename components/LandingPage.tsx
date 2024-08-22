@@ -44,8 +44,8 @@ export default function Landing() {
         setFormDataRegister(prev => ({
             ...prev,
             [name]: value,
-            ...(name === 'language' ? { languages: [...prev.languages, value] } : {}),
-            ...(name === 'level' ? { levels: [...prev.levels, value] } : {})
+            ...(name === 'language' ? { languages: [value] } : {}),
+            ...(name === 'level' ? { levels: [value] } : {})
         }));
     };
 
@@ -239,19 +239,19 @@ export default function Landing() {
                 return (
                     <section className="flex flex-col items-center justify-center gap-8 max-sm:w-full">
                         <div className="flex flex-row items-center justify-center gap-4 max-sm:flex-col max-sm:w-full">
-                            <article className="flex flex-col items-center justify-between sm:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
+                            <article className="flex flex-col items-center justify-between sm:w-1/4 lg:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
                                 <h2><UserRoundSearch /></h2>
 
                                 <p className="flex grow">Globuddy is an international language exchange platform that allows you to connect with people from all over the world.</p>
                         </article>
 
-                        <article className="flex flex-col items-center justify-between sm:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
+                        <article className="flex flex-col items-center justify-between sm:w-1/4 lg:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
                             <h2><Earth /></h2>
 
                             <p className="flex grow">Explore the world with Globuddy. Connect with people from all over the world. Learn new languages and cultures.</p>
                         </article>
 
-                        <article className="flex flex-col items-center justify-between sm:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
+                        <article className="flex flex-col items-center justify-between sm:w-1/4 lg:w-1/6 gap-4 sm:border-2 sm:border-gray-200 sm:rounded-md p-4 h-[300px] hover:scale-105 transition-all duration-300 bg-white max-sm:text-center">
                             <h2><UserRoundSearch /></h2>
 
                             <p className="flex grow">Globuddy is a project management tool that allows you to track your projects and tasks.</p>
