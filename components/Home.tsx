@@ -307,7 +307,8 @@ export default function Home() {
     };
 
     const navigateToProfile = (username: string) => {
-        router.push(`/profile/${username}`);
+        const encodedProfileUsername = encodeURIComponent(username);
+        router.push(`/profile/${encodedProfileUsername}`);
     }
 
     if (status === "loading") return <div>Loading...</div>;

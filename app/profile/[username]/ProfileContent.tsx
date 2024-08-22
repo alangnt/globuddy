@@ -96,8 +96,9 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
   };
 
   const fetchUserData = useCallback(async () => {
+    const encodedUsername = encodeURIComponent(initialUser.username);
     try {
-      const response = await fetch(`/api/users?username=${initialUser.username}`);
+      const response = await fetch(`/api/users?username=${encodedUsername}`);
       if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
@@ -214,7 +215,9 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
 
     try {
         const method = following ? 'DELETE' : 'POST';
-        const response = await fetch(`/api/connect?user.username=${session.user.username}&username=${user.username}`, {
+        const encodedSessionUsername = encodeURIComponent(session.user.username);
+        const encodedProfileUsername = encodeURIComponent(user.username);
+        const response = await fetch(`/api/connect?user.username=${encodedSessionUsername}&username=${encodedProfileUsername}`, {
             method: method,
         });
         if (!response.ok) {
@@ -242,7 +245,9 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
     const checkFollowingStatus = async () => {
         if (session?.user?.username) {
             try {
-                const response = await fetch(`/api/connect?user.username=${session.user.username}&username=${user.username}`, {
+                const encodedSessionUsername = encodeURIComponent(session.user.username);
+                const encodedProfileUsername = encodeURIComponent(user.username);
+                const response = await fetch(`/api/connect?user.username=${encodedSessionUsername}&username=${encodedProfileUsername}`, {
                     method: 'GET',
                 });
                 if (!response.ok) {
