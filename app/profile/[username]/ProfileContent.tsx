@@ -287,7 +287,8 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
             <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/home">Home</Link></li>
             <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/profile">Profile</Link></li>
             <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/messages">Messages</Link></li>
-            <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/settings">Settings</Link></li>
+            <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/notifications">Notifications</Link></li>
+            <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full hidden"><Link href="/settings">Settings</Link></li>
           </ul>
         </nav>
 
@@ -305,7 +306,8 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
                 <Link href="/home" className="hover:scale-105 transition-all duration-300">Home</Link>
                 <Link href="/profile" className="hover:scale-105 transition-all duration-300">Profile</Link>
                 <Link href="/messages" className="hover:scale-105 transition-all duration-300">Messages</Link>
-                <Link href="/settings" className="hover:scale-105 transition-all duration-300">Settings</Link>
+                <Link href="/notifications" className="hover:scale-105 transition-all duration-300">Notifications</Link>
+                <Link href="/settings" className="hover:scale-105 transition-all duration-300 hidden">Settings</Link>
               </nav>
             </SheetContent>
           </Sheet>
