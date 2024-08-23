@@ -73,6 +73,8 @@ export default function Home() {
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
     const [allUsers, setAllUsers] = useState<User[]>([]);
 
+    const encodedUsername = encodeURIComponent(session?.user?.username || '');
+
     const formatDate = (date: Date): string => {
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -98,7 +100,7 @@ export default function Home() {
         const postsWithDetails = await Promise.all(data.map(async (post: Post) => {
             const likeData = await fetch(`/api/likes?id=${post.id}`).then(res => res.json());
             const comments = await fetch(`/api/comments?postId=${post.id}`).then(res => res.json());
-            const userData = await fetch(`/api/users?username=${post.user.username}`).then(res => res.json());
+            const userData = await fetch(`/api/users?username=${encodedUsername}`).then(res => res.json());
             return {
                 ...post,
                 timestamp: new Date(post.created_at).getTime(),
@@ -176,7 +178,7 @@ export default function Home() {
     const filteredPosts = useMemo(() => {
         return allPosts.filter(post => 
             userLanguages.languages.includes(post.user.native_language) ||
-            post.user.languages.some(lang => userLanguages.native_language === lang)
+            (post.user.languages && post.user.languages.some(lang => userLanguages.native_language === lang))
         );
     }, [allPosts, userLanguages]);
 
@@ -193,7 +195,7 @@ export default function Home() {
         const response = await fetch('/api/posts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: session?.user?.username, content }),
+            body: JSON.stringify({ username: encodedUsername, content }),
         });
         if (response.ok) {
             setContent('');
