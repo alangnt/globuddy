@@ -282,6 +282,7 @@ export default function Profile() {
                                 )}
                             </Link>
                         </li>
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/groups">Groups</Link></li>
                         <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full hidden"><Link href="/settings">Settings</Link></li>
                     </ul>
                 </nav>
@@ -308,6 +309,7 @@ export default function Profile() {
                                         </span>
                                     )}
                                 </Link>
+                                <Link href="/groups" className="hover:scale-105 transition-all duration-300">Groups</Link>
                                 <Link href="/settings" className="hover:scale-105 transition-all duration-300 hidden">Settings</Link>
                             </nav>
                         </SheetContent>

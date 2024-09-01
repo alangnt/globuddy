@@ -38,7 +38,7 @@ export default function Notifications() {
 
     const fetchNotifications = async (username: string) => {
         try {
-            const response = await fetch(`/api/notifications?username=${username}`);
+            const response = await fetch(`/api/notifications?username=${encodeURIComponent(username)}`);
             if (response.ok) {
                 const data = await response.json();
                 setNotifications(data);
@@ -81,8 +81,19 @@ export default function Notifications() {
     const handleNotificationClick = async (notification: Notification) => {
         if (notification.type === 'message') {
           // Navigate to the message thread
-          router.push(`/messages?username=${notification.username}`);
+          router.push(`/messages?username=${encodeURIComponent(notification.username)}`);
         }
+
+        if (notification.type === 'comment') {
+            // Navigate to the post
+            router.push(`/home/${notification.related_id}`);
+        }
+
+        if (notification.type === 'like') {
+            // Navigate to the post
+            router.push(`/home/${notification.related_id}`);
+        }
+
         // Mark the notification as read
         await handleMarkAsRead(notification.id);
     };
@@ -99,7 +110,7 @@ export default function Notifications() {
     const fetchNotificationCount = useCallback(async () => {
         if (session?.user?.username) {
             try {
-                const response = await fetch(`/api/notifications?username=${session.user.username}&countOnly=true`);
+                const response = await fetch(`/api/notifications?username=${encodeURIComponent(session.user.username)}&countOnly=true`);
                 if (response.ok) {
                     const { count } = await response.json();
                     setNotificationCount(count);
@@ -144,6 +155,7 @@ export default function Notifications() {
                                 )}
                             </Link>
                         </li>
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/groups">Groups</Link></li>
                         <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full hidden"><Link href="/settings">Settings</Link></li>
                     </ul>
                 </nav>
@@ -170,6 +182,7 @@ export default function Notifications() {
                                         </span>
                                     )}
                                 </Link>
+                                <Link href="/groups" className="hover:scale-105 transition-all duration-300">Groups</Link>
                                 <Link href="/settings" className="hover:scale-105 transition-all duration-300 hidden">Settings</Link>
                             </nav>
                         </SheetContent>

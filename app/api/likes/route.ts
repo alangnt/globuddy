@@ -9,6 +9,19 @@ const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
 });
 
+async function createLikeNotification(username: string, postId: number) {
+    const client = await pool.connect();
+    try {
+        const result = await client.query(
+            'INSERT INTO notifications_globuddy (type, username, content, related_id) VALUES ($1, $2, $3, $4) RETURNING *',
+            ['like', username, `New like on your post`, postId]
+        );
+        return result.rows[0];
+    } finally {
+        client.release();
+    }
+}
+
 // Handle POST request to like or unlike a post
 export async function POST(request: NextRequest) {
     try {
@@ -38,6 +51,7 @@ export async function POST(request: NextRequest) {
                 'INSERT INTO likes_globuddy (username, post_id) VALUES ($1, $2)',
                 [userId, id]
             );
+            await createLikeNotification(userId, id);
             action = 'liked';
         } else {
             // Remove the like

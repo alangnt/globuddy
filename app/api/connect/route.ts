@@ -7,6 +7,19 @@ const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
 })
 
+async function createFollowerNotification(username: string, followerUsername: string, userId: string | null) {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      'INSERT INTO notifications_globuddy (type, username, content, related_id) VALUES ($1, $2, $3, $4) RETURNING *',
+      ['follower', username, `New follower: ${followerUsername}`, userId ? parseInt(userId, 10) : null]
+    );
+    return result.rows[0];
+  } finally {
+    client.release();
+  }
+}
+
 // Handle connect functionality
 export async function POST(req: NextRequest) {
   const follower_username = req.nextUrl.searchParams.get('user.username');
@@ -65,6 +78,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const follower_username = req.nextUrl.searchParams.get('user.username');
   const followed_username = req.nextUrl.searchParams.get('username');
+  const userId = req.nextUrl.searchParams.get('user.id');
 
   if (!follower_username || !followed_username) {
     return NextResponse.json({ error: 'Both usernames are required' }, { status: 400 });
@@ -97,6 +111,10 @@ export async function DELETE(req: NextRequest) {
       [follower_username]
     );
 
+    if (userId) {
+      await createFollowerNotification(followed_username, follower_username, userId);
+    }
+
     await client.query('COMMIT');
     
     return NextResponse.json({ message: 'Disconnection successful' }, { status: 200 });
@@ -113,7 +131,8 @@ export async function DELETE(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const follower_username = req.nextUrl.searchParams.get('user.username');
   const followed_username = req.nextUrl.searchParams.get('username');
-
+  const userId = req.nextUrl.searchParams.get('user.id');
+  
   if (!follower_username || !followed_username) {
     return NextResponse.json({ error: 'Both usernames are required' }, { status: 400 });
   }

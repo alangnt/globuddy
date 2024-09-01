@@ -52,6 +52,7 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [following, setFollowing] = useState<boolean>(false);
   const [user, setUser] = useState<User>(initialUser);
+  const [notificationCount, setNotificationCount] = useState(0);
   
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -279,45 +280,88 @@ export default function ProfileContent({ user: initialUser }: { user: User }) {
     }
   }
 
+  const fetchNotificationCount = useCallback(async () => {
+    if (session?.user?.username) {
+        try {
+            const response = await fetch(`/api/notifications?username=${encodeURIComponent(session.user.username)}&countOnly=true`);
+            if (response.ok) {
+                const { count } = await response.json();
+                setNotificationCount(count);
+            } else {
+                console.error('Failed to fetch notification count');
+            }
+        } catch (error) {
+            console.error('Error fetching notification count:', error);
+        }
+    }
+  }, [session?.user?.username]);
+
+  useEffect(() => {
+      fetchNotificationCount();
+      // Set up an interval to fetch the notification count every minute
+      const intervalId = setInterval(fetchNotificationCount, 60000);
+      
+      // Clean up the interval on component unmount
+      return () => clearInterval(intervalId);
+  }, [fetchNotificationCount]);
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
-      <header className="flex justify-between items-center px-2 mb-12">
-        <Link href="/" className="flex items-center gap-1">
-          <Earth />
-          <h1 className="text-2xl font-bold">Globuddy</h1>
-        </Link>
-
-        <nav className="hidden sm:block">
-          <ul className="flex py-0">
-            <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/home">Home</Link></li>
-            <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/profile">Profile</Link></li>
-            <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/messages">Messages</Link></li>
-            <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/notifications">Notifications</Link></li>
-            <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full hidden"><Link href="/settings">Settings</Link></li>
-          </ul>
-        </nav>
-
-        <div className="flex items-center justify-center gap-2 sm:hidden">
-          <Sheet>
-            <SheetTrigger className="flex items-center justify-center">
-              <Menu />
-            </SheetTrigger>
-            <SheetContent className="flex flex-col items-center gap-12">
-              <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
-              </SheetHeader>
-              
-              <nav className="flex flex-col items-center gap-8 text-lg">
-                <Link href="/home" className="hover:scale-105 transition-all duration-300">Home</Link>
-                <Link href="/profile" className="hover:scale-105 transition-all duration-300">Profile</Link>
-                <Link href="/messages" className="hover:scale-105 transition-all duration-300">Messages</Link>
-                <Link href="/notifications" className="hover:scale-105 transition-all duration-300">Notifications</Link>
-                <Link href="/settings" className="hover:scale-105 transition-all duration-300 hidden">Settings</Link>
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </header>
+      <header className="flex justify-between items-center sm:pl-4 max-sm:px-4 max-sm:pt-2 mb-12">
+                <Link href="/" className="flex items-center gap-1">
+                    <Earth />
+                    <h1 className="text-2xl font-bold">Globuddy</h1>
+                </Link>
+    
+                <nav className="hidden sm:block">
+                    <ul className="flex py-0">
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/home">Home</Link></li>
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/profile">Profile</Link></li>
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/messages">Messages</Link></li>
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center">
+                            <Link href="/notifications" className="flex items-center gap-2">
+                                Notifications
+                                {notificationCount > 0 && (
+                                    <span className="bg-red-500 text-white rounded-full text-xs w-5 h-5 flex justify-center items-center">
+                                        {notificationCount}
+                                    </span>
+                                )}
+                            </Link>
+                        </li>
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/groups">Groups</Link></li>
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full hidden"><Link href="/settings">Settings</Link></li>
+                    </ul>
+                </nav>
+    
+                <div className="flex items-center justify-center gap-2 sm:hidden">
+                    <Sheet>
+                        <SheetTrigger className="flex items-center justify-center">
+                            <Menu />
+                        </SheetTrigger>
+                        <SheetContent className="flex flex-col items-center gap-12">
+                            <SheetHeader>
+                                <SheetTitle>Menu</SheetTitle>
+                            </SheetHeader>
+                            
+                            <nav className="flex flex-col items-center gap-8 text-lg">
+                                <Link href="/home" className="hover:scale-105 transition-all duration-300">Home</Link>
+                                <Link href="/profile" className="hover:scale-105 transition-all duration-300">Profile</Link>
+                                <Link href="/messages" className="hover:scale-105 transition-all duration-300">Messages</Link>
+                                <Link href="/notifications" className="flex items-center gap-2 hover:scale-105 transition-all duration-300">
+                                    Notifications
+                                    {notificationCount > 0 && (
+                                        <span className="bg-red-500 text-white rounded-full text-xs w-5 h-5 flex justify-center items-center">
+                                            {notificationCount}
+                                        </span>
+                                    )}
+                                </Link>
+                                <Link href="/groups" className="hover:scale-105 transition-all duration-300">Groups</Link>
+                                <Link href="/settings" className="hover:scale-105 transition-all duration-300 hidden">Settings</Link>
+                            </nav>
+                        </SheetContent>
+                    </Sheet>
+                </div>
+            </header>
 
       <main className="flex-1 py-12 container mx-auto p-0 md:px-6">
         <div className="grid gap-6 md:grid-cols-[1fr_2fr]">

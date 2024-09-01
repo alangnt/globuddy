@@ -29,6 +29,8 @@ type Post = {
     userLiked: boolean;
     timestamp?: number;
     user: User;
+    languages: string;
+    native_language: string;
 }
 
 type Comment = {
@@ -96,7 +98,6 @@ export default function Home() {
     const fetchPosts = useCallback(async () => {
         const response = await fetch("/api/posts");
         const data = await response.json();
-        console.log(data);
         const postsWithDetails = await Promise.all(data.map(async (post: Post) => {
             const likeData = await fetch(`/api/likes?id=${post.id}`).then(res => res.json());
             const comments = await fetch(`/api/comments?postId=${post.id}`).then(res => res.json());
@@ -110,7 +111,6 @@ export default function Home() {
                 comments: comments,
                 user: {
                     ...post.user,
-                    languages: userData.languages,
                     avatar_url: userData.avatar_url || post.user.avatar_url
                 }
             };
@@ -163,7 +163,7 @@ export default function Home() {
         return shuffleArray(matchingUsers).slice(0, 4);
     }, [matchingUsers]);
 
-    useEffect(() => {
+    useEffect(() => { 
         if (status === "authenticated" && session?.user?.username) {
             fetchUserLanguages(session.user.username);
             fetchPosts();
@@ -313,6 +313,10 @@ export default function Home() {
         router.push(`/profile/${encodedProfileUsername}`);
     }
 
+    const navigateToPost = (postId: number) => {
+        router.push(`/home/${postId}`);
+    }
+
     if (status === "loading") return <div>Loading...</div>;
     if (status === "unauthenticated") return null;
 
@@ -338,6 +342,7 @@ export default function Home() {
                                 )}
                             </Link>
                         </li>
+                        <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full flex justify-center"><Link href="/groups">Groups</Link></li>
                         <li className="text-black px-4 py-2 hover:bg-gray-200 border-b-2 border-transparent hover:border-gray-400 transition-all duration-300 w-full hidden"><Link href="/settings">Settings</Link></li>
                     </ul>
                 </nav>
@@ -362,6 +367,7 @@ export default function Home() {
                                         </span>
                                     )}
                                 </Link>
+                                <Link href="/groups" className="hover:scale-105 transition-all duration-300">Groups</Link>
                                 <Link href="/settings" className="hover:scale-105 transition-all duration-300 hidden">Settings</Link>
                             </nav>
                         </SheetContent>
@@ -439,87 +445,95 @@ export default function Home() {
                                             </div>
 
                                             <div className="flex flex-col flex-grow">
-                                                <div className="flex items-center gap-2 justify-between">
-                                                    <div className="flex items-center gap-2">
+                                                <div onClick={() => navigateToPost(post.id)} className="hover:cursor-pointer">
+                                                    <div className="flex items-center gap-2 justify-between">
                                                         <div className="flex items-center gap-2">
-                                                            <h3 className="text-lg font-bold hover:cursor-pointer" onClick={() => navigateToProfile(post.username)}>{post.username}</h3>
-                                                            <p className="text-gray-500 text-xs sm:block hidden">
-                                                                {getLanguageAcronym(post.user?.native_language || 'Native Language')} -&nbsp;
-                                                                {post.user?.languages ? post.user.languages.map(getLanguageAcronym).join(', ') : 'Languages'}
-                                                            </p>
-                                                        </div>
-                                                        <p className="text-gray-500 text-sm sm:block hidden">{post.created_at}</p>
-                                                    </div>
-                                                    {post.username === session?.user?.username && (
-                                                        <>
-                                                            <button onClick={() => handleEllipsisClick(post.id)} className="max-sm:hidden"><Ellipsis className="w-4 h-4" /></button>
-
-                                                            <div className="flex gap-2 sm:hidden">
-                                                                <Dialog open={editPost?.id === post.id} onOpenChange={(open) => !open && setEditPost(null)}>
-                                                                    <DialogTrigger asChild>
-                                                                        <button onClick={() => handleEditClick(post)}><Pencil className="w-4 h-4" /></button>
-                                                                    </DialogTrigger>
-
-                                                                    <DialogContent>
-                                                                        <DialogHeader>
-                                                                            <DialogTitle>Edit Post</DialogTitle>
-                                                                        </DialogHeader>
-                                                                        <textarea
-                                                                            value={editPost?.content || ''}
-                                                                            onChange={(e) => setEditPost(prev => prev ? {...prev, content: e.target.value} : null)}
-                                                                            className="w-full p-2 border rounded resize-none"
-                                                                            rows={4}
-                                                                        />
-                                                                        <DialogFooter className="flex flex-col gap-2">
-                                                                            <Button onClick={() => setEditPost(null)}>Cancel</Button>
-                                                                            <Button onClick={() => editPost && handleSaveEdit(editPost)}>Save</Button>
-                                                                        </DialogFooter>
-                                                                    </DialogContent>
-                                                                </Dialog>
-
-                                                                <Dialog open={isDeleteDialogOpen && postToDelete?.id === post.id} onOpenChange={setIsDeleteDialogOpen}>
-                                                                    <DialogTrigger asChild>
-                                                                        <button onClick={() => handleDeleteClick(post)}><Trash2 className="w-4 h-4" /></button>
-                                                                    </DialogTrigger>
-
-                                                                    <DialogContent>
-                                                                        <DialogHeader>
-                                                                            <DialogTitle>Delete Post</DialogTitle>
-                                                                            <DialogDescription>Are you sure you want to delete this post? This action cannot be undone.</DialogDescription>
-                                                                        </DialogHeader>
-                                                                        <DialogFooter className="flex flex-col gap-2">
-                                                                            <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                                                                            <Button onClick={confirmDelete} variant="destructive">Delete</Button>
-                                                                        </DialogFooter>
-                                                                    </DialogContent>
-                                                                </Dialog>
+                                                            <div className="flex items-center gap-2">
+                                                                <h3 className="text-lg font-bold">{post.username}</h3>
+                                                                <p className="text-gray-500 text-xs sm:block hidden">
+                                                                    {getLanguageAcronym(post.user?.native_language || 'Native Language')} -&nbsp;
+                                                                    {post.user?.languages ? post.user.languages.map(getLanguageAcronym).join(', ') : 'Languages'}
+                                                                </p>
                                                             </div>
-                                                        </>
+                                                            <p className="text-gray-500 text-sm sm:block hidden">{post.created_at}</p>
+                                                        </div>
+                                                        {post.username === session?.user?.username && (
+                                                            <>
+                                                                <button onClick={() => handleEllipsisClick(post.id)} className="max-sm:hidden"><Ellipsis className="w-4 h-4" /></button>
+
+                                                                <div className="flex gap-2 sm:hidden">
+                                                                    <Dialog open={editPost?.id === post.id} onOpenChange={(open) => !open && setEditPost(null)}>
+                                                                        <DialogTrigger asChild>
+                                                                            <button onClick={() => handleEditClick(post)}><Pencil className="w-4 h-4" /></button>
+                                                                        </DialogTrigger>
+
+                                                                        <DialogContent>
+                                                                            <DialogHeader>
+                                                                                <DialogTitle>Edit Post</DialogTitle>
+                                                                            </DialogHeader>
+                                                                            <textarea
+                                                                                value={editPost?.content || ''}
+                                                                                onChange={(e) => setEditPost(prev => prev ? {...prev, content: e.target.value} : null)}
+                                                                                className="w-full p-2 border rounded resize-none"
+                                                                                rows={4}
+                                                                            />
+                                                                            <DialogFooter className="flex flex-col gap-2">
+                                                                                <Button onClick={() => setEditPost(null)}>Cancel</Button>
+                                                                                <Button onClick={() => editPost && handleSaveEdit(editPost)}>Save</Button>
+                                                                            </DialogFooter>
+                                                                        </DialogContent>
+                                                                    </Dialog>
+
+                                                                    <Dialog open={isDeleteDialogOpen && postToDelete?.id === post.id} onOpenChange={setIsDeleteDialogOpen}>
+                                                                        <DialogTrigger asChild>
+                                                                            <button onClick={() => handleDeleteClick(post)}><Trash2 className="w-4 h-4" /></button>
+                                                                        </DialogTrigger>
+
+                                                                        <DialogContent>
+                                                                            <DialogHeader>
+                                                                                <DialogTitle>Delete Post</DialogTitle>
+                                                                                <DialogDescription>Are you sure you want to delete this post? This action cannot be undone.</DialogDescription>
+                                                                            </DialogHeader>
+                                                                            <DialogFooter className="flex flex-col gap-2">
+                                                                                <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                                                                                <Button onClick={confirmDelete} variant="destructive">Delete</Button>
+                                                                            </DialogFooter>
+                                                                        </DialogContent>
+                                                                    </Dialog>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    {editPost?.id === post.id ? (
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={editPost.content}
+                                                                onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
+                                                                className="flex-grow p-1 border rounded"
+                                                            />
+                                                            <button onClick={() => handleSaveEdit(editPost)} className="bg-gray-300 px-2 py-1 rounded">Save</button>
+                                                            <button onClick={() => setEditPost(null)} className="bg-gray-300 px-2 py-1 rounded">Cancel</button>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm">{post.content}</p>
                                                     )}
                                                 </div>
-                                                {editPost?.id === post.id ? (
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={editPost.content}
-                                                            onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
-                                                            className="flex-grow p-1 border rounded"
-                                                        />
-                                                        <button onClick={() => handleSaveEdit(editPost)} className="bg-gray-300 px-2 py-1 rounded">Save</button>
-                                                        <button onClick={() => setEditPost(null)} className="bg-gray-300 px-2 py-1 rounded">Cancel</button>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-sm">{post.content}</p>
-                                                )}
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-4 mt-2">
                                                     <button
-                                                        onClick={() => handleLikeClick(post.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleLikeClick(post.id);
+                                                        }}
                                                         className={`${post.userLiked ? 'text-blue-500' : 'text-gray-500'} text-sm flex gap-1`}
                                                     >
                                                         <ThumbsUp className="w-4 h-4" /> {post.likes}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleCommentClick(post.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCommentClick(post.id);
+                                                        }}
                                                         className="text-gray-500 text-sm flex gap-1 items-center hover:text-gray-700"
                                                     >
                                                         <MessageSquare className="w-4 h-4" /> {post.comments.length}
@@ -527,7 +541,7 @@ export default function Home() {
                                                 </div>
                                             </div>
                                             {activePostId === post.id && (
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-2 absolute top-8 right-0">
                                                     <button onClick={() => handleEditClick(post)}><Pencil className="w-4 h-4" /></button>
                                                     <button onClick={() => handleDeleteClick(post)}><Trash2 className="w-4 h-4" /></button>
                                                 </div>
@@ -604,90 +618,98 @@ export default function Home() {
                                             </div>
 
                                             <div className="flex flex-col flex-grow">
-                                                <div className="flex items-center gap-2 justify-between">
-                                                    <div className="flex items-center gap-2">
+                                                <div onClick={() => navigateToPost(post.id)} className="hover:cursor-pointer">
+                                                    <div className="flex items-center gap-2 justify-between">
                                                         <div className="flex items-center gap-2">
-                                                            <h3 className="text-lg font-bold hover:cursor-pointer" onClick={() => navigateToProfile(post.username)}>{post.username}</h3>
-                                                            <p className="text-gray-500 text-xs sm:block hidden">
-                                                                {getLanguageAcronym(post.user?.native_language || 'Native Language')} -&nbsp;
-                                                                {post.user?.languages ? post.user.languages.map(getLanguageAcronym).join(', ') : 'Languages'}
-                                                            </p>
-                                                        </div>
-                                                        <p className="text-gray-500 text-sm sm:block hidden">{post.created_at}</p>
-                                                    </div>
-                                                    {post.username === session?.user?.username && (
-                                                        <>
-                                                            <button onClick={() => handleEllipsisClick(post.id)} className="max-sm:hidden"><Ellipsis className="w-4 h-4" /></button>
-
-                                                            <div className="flex gap-2 sm:hidden">
-                                                                <Dialog open={editPost?.id === post.id} onOpenChange={(open) => !open && setEditPost(null)}>
-                                                                    <DialogTrigger asChild>
-                                                                        <button onClick={() => handleEditClick(post)}><Pencil className="w-4 h-4" /></button>
-                                                                    </DialogTrigger>
-
-                                                                    <DialogContent>
-                                                                        <DialogHeader>
-                                                                            <DialogTitle>Edit Post</DialogTitle>
-                                                                        </DialogHeader>
-                                                                        <textarea
-                                                                            value={editPost?.content || ''}
-                                                                            onChange={(e) => setEditPost(prev => prev ? {...prev, content: e.target.value} : null)}
-                                                                            className="w-full p-2 border rounded resize-none"
-                                                                            rows={4}
-                                                                        />
-                                                                        <DialogFooter className="flex flex-col gap-2">
-                                                                            <Button onClick={() => setEditPost(null)}>Cancel</Button>
-                                                                            <Button onClick={() => editPost && handleSaveEdit(editPost)}>Save</Button>
-                                                                        </DialogFooter>
-                                                                    </DialogContent>
-                                                                </Dialog>
-
-                                                                <Dialog open={isDeleteDialogOpen && postToDelete?.id === post.id} onOpenChange={setIsDeleteDialogOpen}>
-                                                                    <DialogTrigger asChild>
-                                                                        <button onClick={() => handleDeleteClick(post)}><Trash2 className="w-4 h-4" /></button>
-                                                                    </DialogTrigger>
-
-                                                                    <DialogContent>
-                                                                        <DialogHeader>
-                                                                            <DialogTitle>Delete Post</DialogTitle>
-                                                                            <DialogDescription>Are you sure you want to delete this post? This action cannot be undone.</DialogDescription>
-                                                                        </DialogHeader>
-                                                                        <DialogFooter className="flex flex-col gap-2">
-                                                                            <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                                                                            <Button onClick={confirmDelete} variant="destructive">Delete</Button>
-                                                                        </DialogFooter>
-                                                                    </DialogContent>
-                                                                </Dialog>
+                                                            <div className="flex items-center gap-2">
+                                                                <h3 className="text-lg font-bold hover:cursor-pointer" onClick={() => navigateToProfile(post.username)}>{post.username}</h3>
+                                                                <p className="text-gray-500 text-xs sm:block hidden">
+                                                                    {getLanguageAcronym(post.user?.native_language || 'Native Language')} -&nbsp;
+                                                                    {post.user?.languages ? post.user.languages.map(getLanguageAcronym).join(', ') : 'Languages'}
+                                                                </p>
                                                             </div>
-                                                        </>
+                                                            <p className="text-gray-500 text-sm sm:block hidden">{post.created_at}</p>
+                                                        </div>
+                                                        {post.username === session?.user?.username && (
+                                                            <>
+                                                                <button onClick={() => handleEllipsisClick(post.id)} className="max-sm:hidden"><Ellipsis className="w-4 h-4" /></button>
+
+                                                                <div className="flex gap-2 sm:hidden">
+                                                                    <Dialog open={editPost?.id === post.id} onOpenChange={(open) => !open && setEditPost(null)}>
+                                                                        <DialogTrigger asChild>
+                                                                            <button onClick={() => handleEditClick(post)}><Pencil className="w-4 h-4" /></button>
+                                                                        </DialogTrigger>
+
+                                                                        <DialogContent>
+                                                                            <DialogHeader>
+                                                                                <DialogTitle>Edit Post</DialogTitle>
+                                                                            </DialogHeader>
+                                                                            <textarea
+                                                                                value={editPost?.content || ''}
+                                                                                onChange={(e) => setEditPost(prev => prev ? {...prev, content: e.target.value} : null)}
+                                                                                className="w-full p-2 border rounded resize-none"
+                                                                                rows={4}
+                                                                            />
+                                                                            <DialogFooter className="flex flex-col gap-2">
+                                                                                <Button onClick={() => setEditPost(null)}>Cancel</Button>
+                                                                                <Button onClick={() => editPost && handleSaveEdit(editPost)}>Save</Button>
+                                                                            </DialogFooter>
+                                                                        </DialogContent>
+                                                                    </Dialog>
+
+                                                                    <Dialog open={isDeleteDialogOpen && postToDelete?.id === post.id} onOpenChange={setIsDeleteDialogOpen}>
+                                                                        <DialogTrigger asChild>
+                                                                            <button onClick={() => handleDeleteClick(post)}><Trash2 className="w-4 h-4" /></button>
+                                                                        </DialogTrigger>
+
+                                                                        <DialogContent>
+                                                                            <DialogHeader>
+                                                                                <DialogTitle>Delete Post</DialogTitle>
+                                                                                <DialogDescription>Are you sure you want to delete this post? This action cannot be undone.</DialogDescription>
+                                                                            </DialogHeader>
+                                                                            <DialogFooter className="flex flex-col gap-2">
+                                                                                <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                                                                                <Button onClick={confirmDelete} variant="destructive">Delete</Button>
+                                                                            </DialogFooter>
+                                                                        </DialogContent>
+                                                                    </Dialog>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    {editPost?.id === post.id ? (
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={editPost.content}
+                                                                onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
+                                                                className="flex-grow p-1 border rounded"
+                                                            />
+
+                                                            <div className="flex gap-2">
+                                                                <button onClick={() => handleSaveEdit(editPost)} className="bg-gray-300 px-2 py-1 rounded">Save</button>
+                                                                <button onClick={() => setEditPost(null)} className="bg-gray-300 px-2 py-1 rounded">Cancel</button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm">{post.content}</p>
                                                     )}
                                                 </div>
-                                                {editPost?.id === post.id ? (
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={editPost.content}
-                                                            onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
-                                                            className="flex-grow p-1 border rounded"
-                                                        />
-
-                                                        <div className="flex gap-2">
-                                                            <button onClick={() => handleSaveEdit(editPost)} className="bg-gray-300 px-2 py-1 rounded">Save</button>
-                                                            <button onClick={() => setEditPost(null)} className="bg-gray-300 px-2 py-1 rounded">Cancel</button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-sm">{post.content}</p>
-                                                )}
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-4 mt-2">
                                                     <button
-                                                        onClick={() => handleLikeClick(post.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleLikeClick(post.id);
+                                                        }}
                                                         className={`${post.userLiked ? 'text-blue-500' : 'text-gray-500'} text-sm flex gap-1`}
                                                     >
                                                         <ThumbsUp className="w-4 h-4" /> {post.likes}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleCommentClick(post.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCommentClick(post.id);
+                                                        }}
                                                         className="text-gray-500 text-sm flex gap-1 items-center hover:text-gray-700"
                                                     >
                                                         <MessageSquare className="w-4 h-4" /> {post.comments.length}
