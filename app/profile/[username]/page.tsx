@@ -25,7 +25,8 @@ async function getUser(username: string) {
   }
 }
 
-export default async function ProfilePage({ params }: { params: { username: string } }) {
+export default async function ProfilePage(props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   try {
     const user = await getUser(params.username)
 

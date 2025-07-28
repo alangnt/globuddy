@@ -11,7 +11,8 @@ async function getPost(postId: string) {
     return res.json();
 }
 
-export default async function PostPage({ params }: { params: { postId: string } }) {
+export default async function PostPage(props: { params: Promise<{ postId: string }> }) {
+    const params = await props.params;
     const postId = params.postId;
     const post = await getPost(postId);
 
