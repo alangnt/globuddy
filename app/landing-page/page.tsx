@@ -12,7 +12,7 @@ import Languages from "@/components/Languages";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-export default function Landing() {
+export default function LandingPage() {
     const [submitted, setSubmitted] = useState<boolean>(false);
     const [activeSection, setActiveSection] = useState<string>('about');
     const router = useRouter();

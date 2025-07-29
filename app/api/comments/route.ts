@@ -18,6 +18,43 @@ async function createCommentNotification(postOwnerUsername: string, commentAutho
     }
 }
 
+export async function GET(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const postId = searchParams.get('postId');
+
+        let query = `
+            SELECT c.id, c.content, c.post_id, c.username, c.created_at, u.avatar_url
+            FROM comments_globuddy c
+            LEFT JOIN users_globuddy u ON c.username = u.username
+        `;
+        const values: any[] = [];
+
+        if (postId) {
+            query += ' WHERE c.post_id = $1';
+            values.push(postId);
+        }
+
+        query += ' ORDER BY c.created_at DESC';
+
+        const result = await pool.query(query, values);
+        return NextResponse.json(result.rows.map(row => ({
+            id: row.id,
+            content: row.content,
+            postId: row.post_id,
+            username: row.username,
+            created_at: row.created_at,
+            user: {
+                username: row.username,
+                avatar_url: row.avatar_url
+            }
+        })));
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
+
 export async function POST(request: NextRequest) {
     try {
         const { content, postId, username } = await request.json();
@@ -53,43 +90,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(result.rows[0]);
     } catch (error) {
         console.error('Error creating comment:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-}
-
-export async function GET(request: NextRequest) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const postId = searchParams.get('postId');
-
-        let query = `
-            SELECT c.id, c.content, c.post_id, c.username, c.created_at, u.avatar_url
-            FROM comments_globuddy c
-            LEFT JOIN users_globuddy u ON c.username = u.username
-        `;
-        const values: any[] = [];
-
-        if (postId) {
-            query += ' WHERE c.post_id = $1';
-            values.push(postId);
-        }
-
-        query += ' ORDER BY c.created_at DESC';
-
-        const result = await pool.query(query, values);
-        return NextResponse.json(result.rows.map(row => ({
-            id: row.id,
-            content: row.content,
-            postId: row.post_id,
-            username: row.username,
-            created_at: row.created_at,
-            user: {
-                username: row.username,
-                avatar_url: row.avatar_url
-            }
-        })));
-    } catch (error) {
-        console.error('Error fetching comments:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
