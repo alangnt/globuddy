@@ -9,17 +9,15 @@ export default function App() {
 
   return (
     <div>
-      <main>
-        {status === 'authenticated' ? (
-          <div>
-            <HomePage></HomePage>
-          </div>
-        ) : (
-          <div>
-            <LandingPage></LandingPage>
-          </div>
-        )}
-      </main>
+      {status === 'authenticated' ? (
+        <div>
+          <HomePage></HomePage>
+        </div>
+      ) : (
+        <div>
+          <LandingPage></LandingPage>
+        </div>
+      )}
     </div>
   );
 }
