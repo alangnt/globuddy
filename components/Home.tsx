@@ -444,7 +444,7 @@ export default function Home() {
                                                 />
                                             </div>
 
-                                            <div className="flex flex-col flex-grow">
+                                            <div className="flex flex-col grow">
                                                 <div onClick={() => navigateToPost(post.id)} className="hover:cursor-pointer">
                                                     <div className="flex items-center gap-2 justify-between">
                                                         <div className="flex items-center gap-2">
@@ -510,7 +510,7 @@ export default function Home() {
                                                                 type="text"
                                                                 value={editPost.content}
                                                                 onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
-                                                                className="flex-grow p-1 border rounded"
+                                                                className="grow p-1 border rounded"
                                                             />
                                                             <button onClick={() => handleSaveEdit(editPost)} className="bg-gray-300 px-2 py-1 rounded">Save</button>
                                                             <button onClick={() => setEditPost(null)} className="bg-gray-300 px-2 py-1 rounded">Cancel</button>
@@ -617,7 +617,7 @@ export default function Home() {
                                                 />
                                             </div>
 
-                                            <div className="flex flex-col flex-grow">
+                                            <div className="flex flex-col grow">
                                                 <div onClick={() => navigateToPost(post.id)} className="hover:cursor-pointer">
                                                     <div className="flex items-center gap-2 justify-between">
                                                         <div className="flex items-center gap-2">
@@ -683,7 +683,7 @@ export default function Home() {
                                                                 type="text"
                                                                 value={editPost.content}
                                                                 onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
-                                                                className="flex-grow p-1 border rounded"
+                                                                className="grow p-1 border rounded"
                                                             />
 
                                                             <div className="flex gap-2">

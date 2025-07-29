@@ -447,7 +447,7 @@ function MessagesContent() {
                             </div>
                             
                             {isSearching && (
-                                <div className="flex flex-col gap-2 p-4 fixed inset-0 bg-white/90 z-50 backdrop-blur-sm items-center justify-center">
+                                <div className="flex flex-col gap-2 p-4 fixed inset-0 bg-white/90 z-50 backdrop-blur-xs items-center justify-center">
                                     <div className="flex flex-col gap-2 w-full max-w-md">
                                         <Input 
                                             name="search" 
@@ -455,7 +455,7 @@ function MessagesContent() {
                                             placeholder="Search for users" 
                                             value={searchQuery} 
                                             onChange={handleSearchChange} 
-                                            className="flex-grow"
+                                            className="grow"
                                         />
                                         <Button onClick={() => setIsSearching(false)} variant="outline" className="w-full">Cancel</Button>
                                     </div>
@@ -485,7 +485,7 @@ function MessagesContent() {
                             )}
 
                             {isCreatingGroup && (
-                                <div className="flex flex-col gap-2 p-4 fixed inset-0 bg-white/90 z-50 backdrop-blur-sm items-center justify-center">
+                                <div className="flex flex-col gap-2 p-4 fixed inset-0 bg-white/90 z-50 backdrop-blur-xs items-center justify-center">
                                     <div className="flex flex-col gap-2 w-full max-w-md">
                                         <Input 
                                             name="groupName" 
@@ -493,14 +493,14 @@ function MessagesContent() {
                                             placeholder="Group Name" 
                                             value={groupName} 
                                             onChange={handleGroupNameChange} 
-                                            className="flex-grow"
+                                            className="grow"
                                         />
                                         <Textarea
                                             name="groupDescription"
                                             placeholder="Group Description"
                                             value={groupDescription}
                                             onChange={handleGroupDescriptionChange}
-                                            className="flex-grow"
+                                            className="grow"
                                         />
                                         <Button onClick={createGroup} variant="outline" className="w-full">Create Group</Button>
                                     </div>
@@ -509,13 +509,13 @@ function MessagesContent() {
                         </div>
                         
 
-                        <div className="md:flex-grow md:overflow-y-auto w-full max-md:flex max-md:overflow-x-auto m-0">
+                        <div className="md:grow md:overflow-y-auto w-full max-md:flex max-md:overflow-x-auto m-0">
                             <div className="flex md:flex-col max-md:w-max">
                                 {groups.map(group => (
                                     <button
                                         key={group.id}
                                         onClick={() => handleSelectGroup(group)}
-                                        className={`p-2 md:w-full text-left ${selectedUser === group.id ? 'bg-gray-200' : ''} hover:bg-gray-100 flex items-center gap-2 max-sm:flex-shrink-0`}
+                                        className={`p-2 md:w-full text-left ${selectedUser === group.id ? 'bg-gray-200' : ''} hover:bg-gray-100 flex items-center gap-2 max-sm:shrink-0`}
                                     >   
                                         <div>
                                             <div className="rounded-full border-2 border-gray-200 min-w-[50px] min-h-[50px] max-w-[50px] max-h-[50px]">
@@ -540,7 +540,7 @@ function MessagesContent() {
                                     <button
                                         key={conv.otherUser}
                                         onClick={() => handleSelectConversation(conv.otherUser)}
-                                        className={`p-2 md:w-full text-left ${selectedUser === conv.otherUser ? 'bg-gray-200' : ''} hover:bg-gray-100 flex items-center gap-2 max-sm:flex-shrink-0`}
+                                        className={`p-2 md:w-full text-left ${selectedUser === conv.otherUser ? 'bg-gray-200' : ''} hover:bg-gray-100 flex items-center gap-2 max-sm:shrink-0`}
                                     >   
                                         <div>
                                             <Image
@@ -580,7 +580,7 @@ function MessagesContent() {
                                             <h3 className="text-xl font-bold">{selectedUser}</h3>
                                         </div>
 
-                                        <div className="flex-grow overflow-y-auto p-4">
+                                        <div className="grow overflow-y-auto p-4">
                                             {messages.map(message => (
                                                 <div key={message.id} className={`flex flex-col mb-4 ${message.user1 === username ? 'items-end' : 'items-start'}`}>
                                                     <p className={`p-2 rounded md:max-w-[40%] ${message.user1 === username ? 'bg-blue-100' : 'bg-gray-100'} max-sm:w-[80%] max-md:w-[60%]`}>
@@ -601,7 +601,7 @@ function MessagesContent() {
                                                 placeholder="Write a message" 
                                                 value={message} 
                                                 onChange={(e) => setMessage(e.target.value)} 
-                                                className="flex-grow sm:mr-2 max-sm:w-full max-sm:hidden"
+                                                className="grow sm:mr-2 max-sm:w-full max-sm:hidden"
                                             />
 
                                             <Textarea
@@ -609,7 +609,7 @@ function MessagesContent() {
                                                 placeholder="Write a message"
                                                 value={message}
                                                 onChange={(e) => setMessage(e.target.value)}
-                                                className="flex-grow sm:mr-2 max-sm:w-full sm:hidden"
+                                                className="grow sm:mr-2 max-sm:w-full sm:hidden"
                                             />
                                             <Button type="submit" variant="outline" className="max-sm:w-full">Send</Button>
                                         </form>
@@ -635,7 +635,7 @@ function MessagesContent() {
                                             </div>
                                         </div>
 
-                                        <div className="flex-grow overflow-y-auto p-4">
+                                        <div className="grow overflow-y-auto p-4">
                                             {groupMessages.length === 0 ? (
                                                 <p className="text-center text-gray-500 p-4">No messages yet</p>
                                             ) : (
@@ -685,7 +685,7 @@ function MessagesContent() {
                                                 placeholder="Write a message" 
                                                 value={groupMessage} 
                                                 onChange={(e) => setGroupMessage(e.target.value)} 
-                                                className="flex-grow sm:mr-2 max-sm:w-full max-sm:hidden"
+                                                className="grow sm:mr-2 max-sm:w-full max-sm:hidden"
                                             />
 
                                             <Textarea
@@ -693,7 +693,7 @@ function MessagesContent() {
                                                 placeholder="Write a message"
                                                 value={groupMessage}
                                                 onChange={(e) => setGroupMessage(e.target.value)}
-                                                className="flex-grow sm:mr-2 max-sm:w-full sm:hidden"
+                                                className="grow sm:mr-2 max-sm:w-full sm:hidden"
                                             />
                                             <Button type="submit" variant="outline" className="max-sm:w-full">Send</Button>
                                         </form>

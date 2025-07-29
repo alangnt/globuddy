@@ -351,7 +351,7 @@ function Main() {
                 </section>
 
                 {editGroup && (
-                    <div className="flex flex-col absolute top-0 left-0 bg-white/70 backdrop-blur-sm z-10 w-full h-full justify-center items-center">
+                    <div className="flex flex-col absolute top-0 left-0 bg-white/70 backdrop-blur-xs z-10 w-full h-full justify-center items-center">
                         <div className="flex flex-col gap-12 w-[30%] bg-white p-4 rounded-md shadow-lg">
                             <div className="flex flex-col gap-8">
                                 <div className="flex flex-col items-center gap-2">
@@ -387,7 +387,7 @@ function Main() {
                 )}
 
                 {deleteGroup && (
-                    <div className="flex flex-col absolute top-0 left-0 bg-white/70 backdrop-blur-sm z-10 w-full h-full justify-center items-center">
+                    <div className="flex flex-col absolute top-0 left-0 bg-white/70 backdrop-blur-xs z-10 w-full h-full justify-center items-center">
                         <div className="flex flex-col justify-center gap-12 w-[30%] bg-white p-4 rounded-md shadow-lg">
                             <p className="text-center text-lg">Are you sure you want to delete this group?</p>
 

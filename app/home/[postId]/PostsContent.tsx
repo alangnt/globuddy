@@ -367,7 +367,7 @@ function MobileMenu({ notificationCount }: { notificationCount: number }) {
 
 function PostDisplay({ post, getAvatarUrl, navigateToProfile, formatDate, handleLikeClick, likes }: { post: Post, getAvatarUrl: (avatarUrl: string | null) => string, navigateToProfile: (username: string) => void, formatDate: (dateString: string) => string, handleLikeClick: (postId: number) => void, likes: number }) {
     return (
-        <section className="flex flex-col gap-4 w-full mx-auto bg-white p-6 sm:rounded-md border border-gray-300 shadow-sm">
+        <section className="flex flex-col gap-4 w-full mx-auto bg-white p-6 sm:rounded-md border border-gray-300 shadow-xs">
             <div className="flex items-center gap-4">
                 <Image
                     src={getAvatarUrl(post.user.avatar_url)}
@@ -402,7 +402,7 @@ function PostDisplay({ post, getAvatarUrl, navigateToProfile, formatDate, handle
 
 function CommentSection({ comments, getAvatarUrl, navigateToProfile, formatDate, handleCommentSubmit, setCommentContent }: { comments: Comment[], getAvatarUrl: (avatarUrl: string | null) => string, navigateToProfile: (username: string) => void, formatDate: (dateString: string) => string, handleCommentSubmit: () => void, setCommentContent: (content: string) => void }) {
     return (
-        <section className="w-full mx-auto bg-white p-6 sm:rounded-md border border-gray-300 shadow-sm flex flex-col gap-4">
+        <section className="w-full mx-auto bg-white p-6 sm:rounded-md border border-gray-300 shadow-xs flex flex-col gap-4">
             <h3 className="text-xl font-bold mb-4">Comments</h3>
 
             <div className="flex flex-col">
@@ -439,7 +439,7 @@ function CommentSection({ comments, getAvatarUrl, navigateToProfile, formatDate,
 
 function ProfileInformation({ post, getAvatarUrl, navigateToProfile, handleFollowClick, following, session }: { post: Post, getAvatarUrl: (avatarUrl: string | null) => string, navigateToProfile: (username: string) => void, handleFollowClick: () => void, following: boolean, session: Session }) {
     return (
-        <section className="w-full mx-auto bg-white p-6 sm:rounded-md border border-gray-300 shadow-sm flex flex-col gap-4">
+        <section className="w-full mx-auto bg-white p-6 sm:rounded-md border border-gray-300 shadow-xs flex flex-col gap-4">
             <h3 className="text-xl font-bold">About the Author</h3>
 
             <div className="flex items-center gap-2">
@@ -470,7 +470,7 @@ function ProfileInformation({ post, getAvatarUrl, navigateToProfile, handleFollo
 
 function RelatedPosts({ userPosts, formatDate, navigateToPost, currentPost }: { userPosts: Post[], formatDate: (dateString: string) => string, navigateToPost: (postId: number) => void, currentPost: Post }) {
     return (
-        <section className="w-full mx-auto bg-white p-6 sm:rounded-md border border-gray-300 shadow-sm flex flex-col gap-4">
+        <section className="w-full mx-auto bg-white p-6 sm:rounded-md border border-gray-300 shadow-xs flex flex-col gap-4">
             <h3 className="text-xl font-bold">Other Posts by {userPosts[0]?.username}</h3>
 
             <div>

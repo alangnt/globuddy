@@ -478,7 +478,7 @@ export default function Profile() {
                                         {allInterests.map((interest) => (
                                             <Badge
                                                 key={interest}
-                                                variant={formData.interests.includes(interest) ? "default" : "outline"}
+                                                variant={formData.interests.includes(interest) ? "default" : "outline-solid"}
                                                 className={`cursor-pointer ${formData.interests.includes(interest) ? 'bg-primary text-primary-foreground' : ''}`}
                                                 onClick={() => handleInterestChange(interest)}
                                             >
